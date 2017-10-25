@@ -17,13 +17,14 @@ from cryptography.fernet import Fernet
 from actions import BaseAction
 from clauses import BaseClause
 from filters import BaseFilter
-from imapConnexion import ImapConnexion
+from imapConnexion import Cross_Country_Imap_Connexion
 
 class FilterProcessor(object):
     """
 
     """
     elementTypes = ("imap_client" ,"filter" ,"action" ,"clause")
+
     def __init__(self):
         self.actions = {}
         self.filters = []
@@ -82,13 +83,13 @@ class FilterProcessor(object):
                         self.filterLogger.removeHandler(self.fileLogHandler)
                         self.releaseLock(self.include_dir + "/" + f)
 
-    def prepareAnalyse(self, _folders):
+    def prepareAnalyse(self, folders):
         print("Mailbox :%s" % self.imapConnexion.definition["name"])
-        print("folders : " + str(_folders))
+        print("folders : " + str(folders))
         self.filters = []
         self.actions = {}
         self.clauses = {}
-        self.addFilter({ "name": self.imapConnexion.server, "component": "filter", "folder_list": _folders, "action_list": ["Count"]})
+        self.addFilter({ "name": self.imapConnexion.server, "component": "filter", "folder_list": folders, "action_list": ["Count"]})
 
     def readConf(self, conf):
         with open(conf, 'r') as stream:
@@ -165,7 +166,7 @@ class FilterProcessor(object):
         self.clearProcessor()
         self.parseFile(yamlcfg)
         try:
-            self.imapConnexion.connect()
+            self.imapConnexion.login()
             if args.analyse:
                 self.prepareAnalyse(self.imapConnexion.folders)
             for basicAction in BaseAction.basics:
@@ -197,9 +198,9 @@ class FilterProcessor(object):
         password = definition.get("password")
         if not (server and user and password):
             raise Exception("server, user and password are mandatory for imap_client")
-        self.imapConnexion = ImapConnexion(self, definition, self.args)
+        self.imapConnexion = Cross_Country_Imap_Connexion(self, definition, self.args)
 
-    def setLock(self,fileToLock):
+    def setLock(self, fileToLock):
         result =  not os.path.exists(fileToLock[:-4]+'.lock')
         if result:
             open(fileToLock[:-4]+'.lock',mode='w')

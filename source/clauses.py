@@ -21,15 +21,15 @@ class BaseClause(BaseFilterElement):
         "seen", "flagged",
     )
 
-    def __init__(self, _filterprocessor, _definition):
-        self.filterprocessor = _filterprocessor
-        self.definition = _definition
+    def __init__(self, filterProcessor, definition):
+        self.filterProcessor = filterProcessor
+        self.definition = definition
         self.conditions = []
 
         for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
             if not _token in self.tokens:
                 raise Exception('File : "%s" Clause : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
-                    self.filterprocessor.currentfile, self.definition["name"], _token, self.tokens))
+                    self.filterProcessor.currentfile, self.definition["name"], _token, self.tokens))
 
         for _token in self.tokens:
             if not (self.definition.get(_token) is None):
@@ -37,7 +37,7 @@ class BaseClause(BaseFilterElement):
 
         if len(self.conditions) == 0:
             raise Exception('File : "%s" Clause : "%s" is empty\nAdd a condition to the clause' % (
-                self.filterprocessor.currentfile, self.definition["name"]))
+                self.filterProcessor.currentfile, self.definition["name"]))
 
     def _adrInAddressList(self, _criteria, _addressList):
         """
@@ -163,10 +163,10 @@ class BaseClause(BaseFilterElement):
 
     #flags
     def match_flagged(self, _criteria, _header):
-        return _criteria ^ (not '\\Flagged' in _header.flags)
+        return _criteria ^ (not b'\\Flagged' in _header.flags)
 
     def match_seen(self, _criteria, _header):
-        return _criteria ^ (not '\\Seen' in _header.flags)
+        return _criteria ^ (not b'\\Seen' in _header.flags)
 
     # generic match
     def match(self, _header):

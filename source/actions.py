@@ -33,9 +33,9 @@ class BaseAction(object):
     #         self.count += 1
     #     self.end()
 
-    def initializeFilter(self, _filter, _folder):
-        self.filter = _filter
-        self.folder = _folder
+    def initializeFilter(self, filter, folder):
+        self.filter = filter
+        self.folder = folder
 
     def checkDefinition(self):
         pass
@@ -50,14 +50,14 @@ class BaseAction(object):
         pass
 
     @classmethod
-    def newAction(cls, _filterprocessor, _definition):
-        _name = _definition["name"]
-        _type = _definition["type"] + "Action"
+    def newAction(cls, filterprocessor, definition):
+        _name = definition["name"]
+        _type = definition["type"] + "Action"
         try:
-            _newAction = {subcls.__name__: subcls for subcls in cls.__subclasses__()}[_type](_filterprocessor, _definition)
+            _newAction = {subcls.__name__: subcls for subcls in cls.__subclasses__()}[_type](filterprocessor, definition)
         except:
             raise Exception('File : "%s" : Action : "%s" unknown type "%s"\nAvailable types: %s' % (
-                _filterprocessor.currentfile, _name,_definition["type"], tuple(subcls.__name__[:-len("Action")] for subcls in cls.__subclasses__())))
+                filterprocessor.currentfile, _name,definition["type"], tuple(subcls.__name__[:-len("Action")] for subcls in cls.__subclasses__())))
         _newAction.checkDefinition()
         return _newAction
 
@@ -74,21 +74,21 @@ class SeenAction(BaseAction):
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Seen', True)
+            self.filter.IMAPMessageSet, b'\\Seen', True)
 
 class UnseenAction(BaseAction):
     """
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Seen', False)
+            self.filter.IMAPMessageSet, b'\\Seen', False)
 
 class FlagAction(BaseAction):
     """
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Flagged', True)
+            self.filter.IMAPMessageSet, b'\\Flagged', True)
 
 class UnflagAction(BaseAction):
     """
@@ -147,7 +147,7 @@ class UrlAction(BaseAction):
         self.url = self.definition["url"]
         self.data = self.definition["data"]
 
-    def runMessage(self,_m):
+    def runMessage(self,m):
         msgdata = []
         #  [key , value from yml],
         #  "user" , "foo"],
@@ -156,7 +156,7 @@ class UrlAction(BaseAction):
         for l in copy.deepcopy(self.data):
             if len(l) == 3:
                 l.pop(0)
-                l[1] = _m.__dict__[l[1]]
+                l[1] = m.__dict__[l[1]]
             msgdata.append(tuple(l))
         encodeddata = "?" +parse.urlencode(msgdata)
         full_url = self.url + encodeddata
