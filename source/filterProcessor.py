@@ -165,7 +165,7 @@ class FilterProcessor(object):
         self.clearProcessor()
         self.parseFile(yamlcfg)
         try:
-            self.imapConnexion.connect()
+            self.imapConnexion.login()
             if args.analyse:
                 self.prepareAnalyse(self.imapConnexion.folders)
             for basicAction in BaseAction.basics:
