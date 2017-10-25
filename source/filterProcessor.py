@@ -28,6 +28,7 @@ class FilterProcessor(object):
         pass
 
     elementTypes = ("imap_client" ,"filter" ,"action" ,"clause")
+    default_root_dir = './include.d'
 
     def __init__(self):
         self.actions = {}
@@ -118,7 +119,7 @@ class FilterProcessor(object):
                 self.salt = bytes(self.salt, 'utf-8')
             else:
                 self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
-            self.root_dir = yamlcfg.get("root_dir","../include.d")
+            self.root_dir = yamlcfg.get("root_dir",self.default_root_dir)
             self.logger.info("Root directory : %s" % self.root_dir)
 
     def checkElement(self, elt, i):
@@ -212,7 +213,7 @@ class FilterProcessor(object):
         user = definition.get("user")
         password = definition.get("password")
         if not (server and user and password):
-            raise self.CheckError("server, user and password are mandatory for imap_client")
+            raise self.CheckError("server, user and password are mandatory for imap_client component")
         self.imapConnexion = Cross_Country_Imap_Connexion(self, definition, self.args)
 
     def setLock(self, filetolock):
