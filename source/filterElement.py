@@ -7,5 +7,8 @@ Created on
 '''
 
 class BaseFilterElement(object):
+    class CheckError(Exception):
+        pass
+
     tokens = ("name", "component", "crypted")
     pass

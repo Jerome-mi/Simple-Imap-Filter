@@ -23,7 +23,7 @@ class BaseFilter(BaseFilterElement):
         self.definition = _definition
         self.folders = _definition.get("folder_list")
         if not self.folders:
-            raise Exception('File : "%s" Filter : "%s" no folder list \nAdd token "folder_list"' % (
+            raise self.CheckError('File : "%s" Filter : "%s" no folder list \nAdd token "folder_list"' % (
                 self.filterprocessor.currentfile, self.definition["name"]))
         self.clauses = []
         self.actions = []
@@ -31,7 +31,7 @@ class BaseFilter(BaseFilterElement):
 
         for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
             if not _token in self.tokens:
-                raise Exception('File : "%s" Filter : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
+                raise self.CheckError('File : "%s" Filter : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
                     self.filterprocessor.currentfile, self.definition["name"], _token, self.tokens))
 
 
@@ -42,12 +42,12 @@ class BaseFilter(BaseFilterElement):
         for _clauseName in self.definition.get('clause_list',[]):
             clause = self.filterprocessor.clauses.get(_clauseName)
             if not clause:
-                raise Exception('File "%s" : Filter "%s" : unknown clause : "%s"\nAvailable clauses: %s' % (
+                raise self.CheckError('File "%s" : Filter "%s" : unknown clause : "%s"\nAvailable clauses: %s' % (
                     self.filterprocessor.currentfile, self.definition["name"], _clauseName, tuple(self.filterprocessor.clauses.keys())))
             self.clauses.append(clause)
         for _actionName in self.definition.get('action_list',[]):
             if not self.filterprocessor.actions.get(_actionName):
-                raise Exception('File "%s" : Filter "%s" : unknown action : "%s"\nAvailable actions : %s' % (
+                raise self.CheckError('File "%s" : Filter "%s" : unknown action : "%s"\nAvailable actions : %s' % (
                     self.filterprocessor.currentfile, self.definition["name"], _actionName, tuple(self.filterprocessor.actions.keys())))
             self.actions.append(self.filterprocessor.actions[_actionName])
         for _folder in self.folders:

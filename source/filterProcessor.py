@@ -14,6 +14,7 @@ import logging
 
 from cryptography.fernet import Fernet
 
+from filterElement import BaseFilterElement
 from actions import BaseAction
 from clauses import BaseClause
 from filters import BaseFilter
@@ -23,6 +24,9 @@ class FilterProcessor(object):
     """
 
     """
+    class CheckError(Exception):
+        pass
+
     elementTypes = ("imap_client" ,"filter" ,"action" ,"clause")
 
     def __init__(self):
@@ -83,10 +87,12 @@ class FilterProcessor(object):
                             yamlcfg = yaml.load(stream)
                             self.runFile(yamlcfg, self.args)
                             self.logger.info('end of file : "%s"' % fullfile)
+                        except (BaseFilterElement.CheckError, self.CheckError)  as chk:
+                            self.logger.error(chk)
                         except yaml.YAMLError:
                             self.logger.error('YAML Error in file "%s" :' % fullfile)
-                        except:
-                            self.logger.error('File "%s" in error' % fullfile)
+                        except Exception as exc:
+                            self.logger.error('File "%s" in error : %s' % (fullfile, exc))
                             pass
                         finally:
                             self.releaseLock(self.root_dir + "/" + fullfile)
@@ -116,26 +122,22 @@ class FilterProcessor(object):
             self.logger.info("Root directory : %s" % self.root_dir)
 
     def checkElement(self, elt, i):
-        try:
-            _name = elt.get("name")
-            if not _name:
-                raise Exception('File "%s" : Missing name for element "%d"' % (self.currentfile, i))
-            if self.currentNames.get(_name):
-                raise Exception('File "%s" : Duplicating name %s for component "%d"' % (self.currentfile, _name,  i))
-            self.currentNames[_name] = i
-            _type = elt.get("component")
-            if not _type:
-                raise Exception('File "%s" : Missing component for element %d "%s"' % (self.currentfile, i, _name))
-            if not _type in self.elementTypes:
-                raise Exception('File "%s" : Unknown component for element %d "%s"\nAvailable components : %s' % (self.currentfile, i, _name, self.elementTypes))
-            _cryptedFields = elt.get("crypted")
-            if _cryptedFields:
-                for cf in _cryptedFields:
-                    if not elt.get(cf):
-                        raise Exception('File "%s" : Missing crypted value "%s" for component %d "%s"' % (self.currentfile, cf ,i, _name))
-        except Exception as Exc:
-            print(Exc)
-            exit(1)
+        _name = elt.get("name")
+        if not _name:
+            raise self.CheckError('File "%s" : Missing name for element "%d"' % (self.currentfile, i))
+        if self.currentNames.get(_name):
+            raise self.CheckError('File "%s" : Duplicating name %s for component "%d"' % (self.currentfile, _name,  i))
+        self.currentNames[_name] = i
+        _type = elt.get("component")
+        if not _type:
+            raise self.CheckError('File "%s" : Missing component for element %d "%s"' % (self.currentfile, i, _name))
+        if not _type in self.elementTypes:
+            raise self.CheckError('File "%s" : Unknown component for element %d "%s"\nAvailable components : %s' % (self.currentfile, i, _name, self.elementTypes))
+        _cryptedFields = elt.get("crypted")
+        if _cryptedFields:
+            for cf in _cryptedFields:
+                if not elt.get(cf):
+                    raise self.CheckError('File "%s" : Missing crypted value "%s" for component %d "%s"' % (self.currentfile, cf ,i, _name))
 
     def decryptElement(self,elt ,i):
         _cryptedFields = elt.get("crypted")
@@ -164,7 +166,7 @@ class FilterProcessor(object):
                     _used = True
                     break
             if not _used:
-                raise Exception('File "%s" : Action "%s" is not used in any filter"' % (self.currentfile, _action))
+                raise self.CheckError('File "%s" : Action "%s" is not used in any filter"' % (self.currentfile, _action))
 
         for _clause in self.clauses.keys():
             _used = False
@@ -173,7 +175,7 @@ class FilterProcessor(object):
                     _used = True
                     break
             if not _used:
-                raise Exception('File "%s" : Clause "%s" is not used in any filter"' % (self.currentfile, _clause))
+                raise self.CheckError('File "%s" : Clause "%s" is not used in any filter"' % (self.currentfile, _clause))
 
     def runFile(self, yamlcfg, args):
         self.clearProcessor()
@@ -210,7 +212,7 @@ class FilterProcessor(object):
         user = definition.get("user")
         password = definition.get("password")
         if not (server and user and password):
-            raise Exception("server, user and password are mandatory for imap_client")
+            raise self.CheckError("server, user and password are mandatory for imap_client")
         self.imapConnexion = Cross_Country_Imap_Connexion(self, definition, self.args)
 
     def setLock(self, filetolock):
