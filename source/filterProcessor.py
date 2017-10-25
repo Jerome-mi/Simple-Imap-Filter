@@ -28,7 +28,7 @@ class FilterProcessor(object):
         pass
 
     elementTypes = ("imap_client" ,"filter" ,"action" ,"clause")
-    default_root_dir = './include.d'
+    default_root_dir = '../mailboxes.d'
 
     def __init__(self):
         self.actions = {}
