@@ -1,0 +1,30 @@
+---
+# Sample File
+
+# Mail box
+  - name: "My box on myprovider.net"
+    element: imap_client
+    # imap.google.com etc...
+    server: "mail.myprovider.net"
+    user: "my.box@myprovider.net"
+    # crypting is STRONGLY RECOMMENDED, run with -e to encrypt password, then copy output in just below
+    password: "gAAAAABZ6b5eUMcb9thistokenisfake2oYE1YHv9sTZMcQ9v_rTjTjg=="
+    # it is possible to encrypt any data in this file, like this : ["user","password"]
+    crypted: ["password"]
+
+# clauses
+  - name: "Very old and non flagged mails"
+    element: "clause"
+    age_day: 365
+    flagged: False
+
+# filters
+  - name: "Trash non flagged old mails"
+    element: "filter"
+    folder_list: ["Dossier Source"]
+    clause_list: [
+        "Very old non flagged mails",
+      ]
+    action_list: [
+        "Trash",
+      ]
