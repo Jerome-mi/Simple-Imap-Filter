@@ -49,7 +49,7 @@ class BaseClause(BaseFilterElement):
         _criteria = _criteria.upper()
         _match = False
         for _address in _addressList:
-            _match = _match or _address[1] == _criteria
+            _match = _match or _address[1].upper() == _criteria
             if _match: break
         return _match
 
