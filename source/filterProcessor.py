@@ -42,14 +42,16 @@ class FilterProcessor(object):
             cipher_suite = Fernet(self.salt)
             return cipher_suite.decrypt(s)
         except Exception:
-            raise Exception("Error during decrypt token %s" % s)
+            self.logger.error("Error during decrypt token %s\nCheck token and salt" % s)
+            raise
 
     def run(self, args):
         self.args = args
+        self.logger.setLevel(logging.WARNING)
         if self.args.verbose:
             self.logger.setLevel(logging.INFO)
-        else:
-            self.logger.setLevel(logging.WARNING)
+        if self.args.debug:
+                self.logger.setLevel(logging.DEBUG)
         self.logger.info("Running in verbose mode")
         self.logger.info("Reading configuration file : %s" % self.args.conf)
         self.readConf(self.args.conf)
@@ -65,25 +67,30 @@ class FilterProcessor(object):
             print(encoded_text.decode())
             exit(0)
 
-        for f in os.listdir(self.include_dir):
-            if f[-4:] != '.yml':
-                continue
-            with open(self.include_dir + "/" + f, 'r') as stream:
-                if self.setLock(self.include_dir + "/" + f):
-                    try:
-                        self.fileLogHandler = logging.FileHandler(self.include_dir + "/" + f[:-3] +"log",mode='w')
-                        self.filterLogger.addHandler(self.fileLogHandler)
-                        self.currentfile = f
-                        self.logger.info("Running file : %s" % f)
-                        yamlcfg = yaml.load(stream)
-                        self.runFile(yamlcfg, self.args)
-                        self.logger.info("end of file : %s" % f)
-                    except yaml.YAMLError:
-                        print("YAML Error in file %s :" % f)
-                        raise
-                    finally:
-                        self.releaseLock(self.include_dir + "/" + f)
-                        self.filterLogger.removeHandler(self.fileLogHandler)
+        for path, dir, files in os.walk(self.root_dir):
+            for file in files:
+                fullfile = os.path.join(path, file)
+                if file[-4:] != '.yml':
+                    self.logger.debug('File "%s" not ending with .yml : skipped' % file)
+                    continue
+                with open(fullfile, 'r') as stream:
+                    if self.setLock(fullfile):
+                        try:
+                            self.fileLogHandler = logging.FileHandler(fullfile[:-3] +"log",mode='w')
+                            self.filterLogger.addHandler(self.fileLogHandler)
+                            self.currentfile = fullfile
+                            self.logger.info('Running file : "%s"' % fullfile)
+                            yamlcfg = yaml.load(stream)
+                            self.runFile(yamlcfg, self.args)
+                            self.logger.info('end of file : "%s"' % fullfile)
+                        except yaml.YAMLError:
+                            self.logger.error('YAML Error in file "%s" :' % fullfile)
+                        except:
+                            self.logger.error('File "%s" in error' % fullfile)
+                            pass
+                        finally:
+                            self.releaseLock(self.root_dir + "/" + fullfile)
+                            self.filterLogger.removeHandler(self.fileLogHandler)
 
     def prepareAnalyse(self, folders):
         print("Analysing mailbox :%s" % self.imapConnexion.definition["name"])
@@ -101,9 +108,10 @@ class FilterProcessor(object):
                 self.logger.error('Error in YAML configuration file %s :' % conf)
                 raise
             self.salt = yamlcfg.get("salt")
-            if not self.salt:
+            if self.salt:
+                self.salt = bytes(self.salt, 'utf-8')
+            else:
                 self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
-            self.salt = bytes(self.salt, 'utf-8')
             self.root_dir = yamlcfg.get("root_dir","../include.d")
             self.logger.info("Root directory : %s" % self.root_dir)
 
@@ -205,11 +213,13 @@ class FilterProcessor(object):
             raise Exception("server, user and password are mandatory for imap_client")
         self.imapConnexion = Cross_Country_Imap_Connexion(self, definition, self.args)
 
-    def setLock(self, fileToLock):
-        result =  not os.path.exists(fileToLock[:-4]+'.lock')
+    def setLock(self, filetolock):
+        result =  not os.path.exists(filetolock[:-4]+'.lock')
         if result:
-            open(fileToLock[:-4]+'.lock',mode='w')
+            open(filetolock[:-4]+'.lock',mode='w')
+        else:
+            self.logger.info('File "%s" locked, skipped' % filetolock)
         return result
 
-    def releaseLock(self, fileToLock):
-        os.unlink(fileToLock[:-4]+'.lock')
+    def releaseLock(self, filetolock):
+        os.unlink(filetolock[:-4]+'.lock')
