@@ -13,10 +13,10 @@ from urllib import request, parse
 
 
 class BaseAction(object):
-    def __init__(self, _filterprocessor, _definition):
-        self.filterprocessor = _filterprocessor
-        self.name = _definition["name"]
-        self.definition = _definition
+    def __init__(self, filterprocessor, definition):
+        self.filterprocessor = filterprocessor
+        self.name = definition["name"]
+        self.definition = definition
         self.logger = self.filterprocessor.filterLogger
 
     # automaticaly created. if exist, replaced with basic

@@ -18,6 +18,7 @@ if __name__ == '__main__':
     argparser.add_argument("-c", "--conf", help="use configuration file CONF", default="./conf.yml")
     #argparser.add_argument("-t", "--test", help="test configuration and connection", action="store_true", default=False)
     argparser.add_argument("-v", "--verbose", help="verbose mode", action="store_true", default=False)
+    argparser.add_argument("-d", "--debug", help="more verbose mode", action="store_true", default=False)
     argparser.add_argument("-a", "--analyse", help="analyse the given mailbox, all by default", action="store_true", default="")
 
     args = argparser.parse_args()

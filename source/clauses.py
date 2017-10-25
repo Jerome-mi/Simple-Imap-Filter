@@ -28,7 +28,7 @@ class BaseClause(BaseFilterElement):
 
         for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
             if not _token in self.tokens:
-                raise Exception('File : "%s" Clause : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
+                raise self.CheckError('File : "%s" Clause : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
                     self.filterProcessor.currentfile, self.definition["name"], _token, self.tokens))
 
         for _token in self.tokens:
@@ -36,7 +36,7 @@ class BaseClause(BaseFilterElement):
                 self.conditions.append((self.__getattribute__("match_"+_token), self.definition[_token]))
 
         if len(self.conditions) == 0:
-            raise Exception('File : "%s" Clause : "%s" is empty\nAdd a condition to the clause' % (
+            raise self.CheckError('File : "%s" Clause : "%s" is empty\nAdd a condition to the clause' % (
                 self.filterProcessor.currentfile, self.definition["name"]))
 
     def _adrInAddressList(self, _criteria, _addressList):
@@ -49,7 +49,7 @@ class BaseClause(BaseFilterElement):
         _criteria = _criteria.upper()
         _match = False
         for _address in _addressList:
-            _match = _match or _address[1] == _criteria
+            _match = _match or _address[1].upper() == _criteria
             if _match: break
         return _match
 
