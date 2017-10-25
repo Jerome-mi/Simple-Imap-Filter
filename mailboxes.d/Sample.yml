@@ -21,7 +21,7 @@
 # filters
   - name: "Trash non flagged old mails"
     element: "filter"
-    folder_list: ["Dossier Source"]
+    folder_list: ["INBOX"]
     clause_list: [
         "Very old non flagged mails",
       ]
