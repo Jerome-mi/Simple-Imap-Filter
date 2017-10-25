@@ -3,7 +3,7 @@
 
 # Mail box
   - name: "My box on myprovider.net"
-    element: imap_client
+    component: imap_client
     # imap.google.com etc...
     server: "mail.myprovider.net"
     user: "my.box@myprovider.net"
@@ -14,13 +14,13 @@
 
 # clauses
   - name: "Very old and non flagged mails"
-    element: "clause"
+    component: "clause"
     age_day: 365
     flagged: False
 
 # filters
   - name: "Trash non flagged old mails"
-    element: "filter"
+    component: "filter"
     folder_list: ["INBOX"]
     clause_list: [
         "Very old non flagged mails",
