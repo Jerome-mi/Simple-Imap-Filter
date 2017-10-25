@@ -163,10 +163,10 @@ class BaseClause(BaseFilterElement):
 
     #flags
     def match_flagged(self, _criteria, _header):
-        return _criteria ^ (not '\\Flagged' in _header.flags)
+        return _criteria ^ (not b'\\Flagged' in _header.flags)
 
     def match_seen(self, _criteria, _header):
-        return _criteria ^ (not '\\Seen' in _header.flags)
+        return _criteria ^ (not b'\\Seen' in _header.flags)
 
     # generic match
     def match(self, _header):

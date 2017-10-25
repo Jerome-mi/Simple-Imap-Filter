@@ -74,21 +74,21 @@ class SeenAction(BaseAction):
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Seen', True)
+            self.filter.IMAPMessageSet, b'\\Seen', True)
 
 class UnseenAction(BaseAction):
     """
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Seen', False)
+            self.filter.IMAPMessageSet, b'\\Seen', False)
 
 class FlagAction(BaseAction):
     """
     """
     def end(self):
         self.filterprocessor.imapConnexion.flagMessages(
-            self.filter.IMAPMessageSet, '\\Flagged', True)
+            self.filter.IMAPMessageSet, b'\\Flagged', True)
 
 class UnflagAction(BaseAction):
     """
