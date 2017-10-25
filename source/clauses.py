@@ -14,7 +14,6 @@ class BaseClause(BaseFilterElement):
     tokens = (
         "to_domain", "to_full_domain", "to_name", "to_name_cs", "to",
         "from_domain", "from_full_domain", "from_name", "from_name_cs", "from",
-        # subject
         "subject_contains", "subject_starts",
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",

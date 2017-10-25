@@ -26,5 +26,6 @@
         "Very old non flagged mails",
       ]
     action_list: [
-        "Trash",
+#        "Trash",
+      "count",
       ]
