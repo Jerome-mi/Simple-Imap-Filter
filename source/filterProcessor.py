@@ -48,6 +48,8 @@ class FilterProcessor(object):
         self.args = args
         if self.args.verbose:
             self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
         self.logger.info("Running in verbose mode")
         self.logger.info("Reading configuration file : %s" % self.args.conf)
         self.readConf(self.args.conf)
@@ -80,11 +82,11 @@ class FilterProcessor(object):
                         print("YAML Error in file %s :" % f)
                         raise
                     finally:
-                        self.filterLogger.removeHandler(self.fileLogHandler)
                         self.releaseLock(self.include_dir + "/" + f)
+                        self.filterLogger.removeHandler(self.fileLogHandler)
 
     def prepareAnalyse(self, folders):
-        print("Mailbox :%s" % self.imapConnexion.definition["name"])
+        print("Analysing mailbox :%s" % self.imapConnexion.definition["name"])
         print("folders : " + str(folders))
         self.filters = []
         self.actions = {}
@@ -95,12 +97,15 @@ class FilterProcessor(object):
         with open(conf, 'r') as stream:
             try:
                 yamlcfg = dict(yaml.load(stream)[0])
-                self.salt = bytes(yamlcfg["salt"], 'utf-8')
-                self.include_dir = yamlcfg.get("include_dir","../include.d")
-                self.logger.info("Include_dir : %s" % self.include_dir)
-            except yaml.YAMLError:
-                print("YAML Error in configuration file %s :" % conf)
+            except :
+                self.logger.error('Error in YAML configuration file %s :' % conf)
                 raise
+            self.salt = yamlcfg.get("salt")
+            if not self.salt:
+                self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
+            self.salt = bytes(self.salt, 'utf-8')
+            self.root_dir = yamlcfg.get("root_dir","../include.d")
+            self.logger.info("Root directory : %s" % self.root_dir)
 
     def checkElement(self, elt, i):
         try:
