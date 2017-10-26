@@ -1,10 +1,10 @@
 SimpleImapFilter is a simple IMAP filter written in python,
 it is :
-- not a stable program, but almost works, especially delete action
+- not yet a stable program, but almost works, especially the delete action
 
 - based on the holy imapclient library
 
-- using YAML for configuration file and filter configuration
+- using YAML for configuration file and filters configuration
 
 - aimed to be used by (almost) human beings
 
@@ -23,7 +23,7 @@ it is :
 - run "SimpleImapFilter -s" to generate a salt key, and use output into conf.yml for salt
 
 **CONFIGURE FILTERS**
-- copy the sample file into a sub directory of mailboxes.d
+- copy one of the sample files into a sub directory of mailboxes.d
 - rename it as .yml file
 - configure it with imap server and credentials
 run SimpleImapFilter -e <password> to encrypt your password
@@ -41,17 +41,17 @@ options :
 -e encrypt password or any value to be encrypted in configurations files
 -a full message anlysis, fetch all messages in all mailboxes, all folders, usefull for debug. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "Count"
 
-the program "walk" the root directory and for all .yml file in subfolders and run the .yml file
+the program "walks" the root directory, for all .yml file in subfolders "runs" the file
 
-the program can be cronifized as it locks .yml files while filtering
+the program can be cronifized as it locks .yml files while filtering, so if launched while previous process is still running will not cause any trouble
 
-the program outputs it's log into a specific log file for each .yml file, in the same directory  
+the program outputs it's log into a specific log file for each .yml file, in the same place 
 
-each .yml file is composed by :
+each .yml file is composed by components :
 - one imap_client : with IMAP server and credentials
-- a list of filters
-- a dictionary of clauses
-- a dictionary of actions
+- filters
+- clauses
+- actions
 
 **Filters**
 
@@ -88,7 +88,7 @@ implemented conditions are :
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
         "seen", "flagged",
-        "true",
+        "All",
 
 "cs" suffixes means case sensitive, other conditions are non case sensitive
-"true" condition is allways true, it is used by the basic clause "All" which is automatically provided 
+"All" condition is allways true, it is used by the basic clause "All" which is provided by default

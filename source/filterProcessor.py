@@ -194,7 +194,7 @@ class FilterProcessor(object):
             for basicAction in BaseAction.basics:
                 self.addAction({"name": basicAction, "component": "action", "type": basicAction})
             for basicClause in BaseClause.basics:
-                self.addClause({"name": basicClause, "component": "clause", "true": "yes"})
+                self.addClause({"name": basicClause, "component": "clause", basicClause: "yes"})
             for filter in self.filters:
                 filter.run()
         finally:

@@ -18,7 +18,7 @@ class BaseClause(BaseFilterElement):
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
         "seen", "flagged",
-        "true",
+        "All",
     )
 
     # automaticaly created. if exist, replaced with the basic one
@@ -172,7 +172,7 @@ class BaseClause(BaseFilterElement):
         return _criteria ^ (not b'\\Seen' in _header.flags)
 
     #specials
-    def match_true(self, criteria, header):
+    def match_All(self, criteria, header):
         return True
 
     # generic match
