@@ -1,16 +1,16 @@
 SimpleImapFilter is a simple IMAP filter written in python,
 it is :
-- not a stable program, but almost works, especially delete action
+- not yet a stable program, but almost works, especially the delete action
 
 - based on the holy imapclient library
 
-- using YAML for configuration file and filter configuration
+- using YAML for configuration file and filters configuration
 
 - aimed to be used by (almost) human beings
 
 **PRE REQUISITES** :
 - python 3
-- imap client
+- imapclient
 - linux machine but certainly works on others
 
 **INSTALL** :
@@ -20,29 +20,44 @@ it is :
 
 - rename conf.yml.sample to conf.yml
 
-- run "SimpleImapFilter -s"
-- and use output into conf.yml for salt
+- run "SimpleImapFilter -s" to generate a salt key, and use output into conf.yml for salt
+
+**CONFIGURE FILTERS**
+- copy one of the sample files into a sub directory of mailboxes.d
+- rename it as .yml file
+- configure it with imap server and credentials
+run SimpleImapFilter -e <password> to encrypt your password
+- copy the output into configuration file
+- add clauses, actions if needed, and filter(s)
 
 **USE** :
 
 run SimpleImapFilter.py
 
-option : 
--a full message anlysis, fetch all messages in all mailboxes, all folders, usefull for debug
+options :
+-c to specify a configuration file, ./conf.yml by default
+-d, -v verbose mode, d for debug
+-s generates salt key
+-e encrypt password or any value to be encrypted in configurations files
+-a full message anlysis, fetch all messages in all mailboxes, all folders, usefull for debug. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "Count"
 
-the program "walk" the root directory and for all .yml file in subfolders run the .yml file
+the program "walks" the root directory, for all .yml file in subfolders "runs" the file
 
-the program can be cronifized as it locks .yml files while filtering
+the program can be cronifized as it locks .yml files while filtering, so if launched while previous process is still running will not cause any trouble
 
-each .yml file is composed by :
+the program outputs it's log into a specific log file for each .yml file, in the same place 
+
+each .yml file is composed by components :
 - one imap_client : with IMAP server and credentials
-- a list of filters
-- a dictionary of clauses
-- a dictionary of actions
+- filters
+- clauses
+- actions
 
 **Filters**
 
 a filter **applies** an **ordered list of actions** on a list of messages matching with **ONE** of the clauses in his (ordered) clause list
+if the clause list of a filter is empty, no messages will pass through it
+to perform actions to all messages of a folder, use the basic clause "All" which is provided by default
 
 
 **Actions**
@@ -61,7 +76,7 @@ non-basic actions are : "Url" (Alpha version), "Copy", "Move"
 
 -**Copy** copy the filtered message set to his **destination**
  
--**Move** copy the filtered message set to his **destination** and **trash** it
+-**Move** copy the filtered message set to his **destination** and **delete** it
 
 **Clauses**
 
@@ -73,5 +88,7 @@ implemented conditions are :
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
         "seen", "flagged",
+        "All",
 
 "cs" suffixes means case sensitive, other conditions are non case sensitive
+"All" condition is allways true, it is used by the basic clause "All" which is provided by default

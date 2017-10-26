@@ -78,7 +78,7 @@ class BaseFilter(BaseFilterElement):
         :return: boolean
         """
         if len(self.clauses) == 0:
-            return True
+            return False
         _match = False
         for clause in self.clauses:
             _match = _match or clause.match(_m)

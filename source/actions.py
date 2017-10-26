@@ -6,32 +6,20 @@ Created on
 @author: 
 '''
 
-#http://irp.nain-t.net/doku.php/190imap:030_commandes
-
+from filterElement import BaseFilterElement
 import copy
 from urllib import request, parse
 
 
-class BaseAction(object):
+class BaseAction(BaseFilterElement):
     def __init__(self, filterprocessor, definition):
         self.filterprocessor = filterprocessor
         self.name = definition["name"]
         self.definition = definition
         self.logger = self.filterprocessor.filterLogger
 
-    # automaticaly created. if exist, replaced with basic
+    # automaticaly created. if exist, replaced with the basic one
     basics = ["Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag"]
-
-    # def run(self, _filter):
-    #     self.filter = _filter
-    #     self.count = 0
-    #     self.IMAPMessageSet = []
-    #     self.begin()
-    #     for _m in _filter.messageSet():
-    #         self.IMAPMessageSet.append(_m.msgID)
-    #         self.runMessage(_m)
-    #         self.count += 1
-    #     self.end()
 
     def initializeFilter(self, filter, folder):
         self.filter = filter
@@ -56,7 +44,7 @@ class BaseAction(object):
         try:
             _newAction = {subcls.__name__: subcls for subcls in cls.__subclasses__()}[_type](filterprocessor, definition)
         except:
-            raise Exception('File : "%s" : Action : "%s" unknown type "%s"\nAvailable types: %s' % (
+            raise cls.CheckError('File : "%s" : Action : "%s" unknown type "%s"\nAvailable types: %s' % (
                 filterprocessor.currentfile, _name,definition["type"], tuple(subcls.__name__[:-len("Action")] for subcls in cls.__subclasses__())))
         _newAction.checkDefinition()
         return _newAction
@@ -115,7 +103,7 @@ class MoveAction(BaseAction):
     """
     def checkDefinition(self):
         if not self.definition.get("destination"):
-            raise Exception('Missing destination for action "%s"' % (self.name))
+            raise self.CheckError('Missing destination for action "%s"' % (self.name))
 
     def end(self):
         self.filterprocessor.imapConnexion.moveMessages(self.filter.IMAPMessageSet, self.definition["destination"])
@@ -126,7 +114,7 @@ class CopyAction(BaseAction):
     """
     def checkDefinition(self):
         if not self.definition.get("destination"):
-            raise Exception('Missing destination for action "%s"' % (self.name))
+            raise self.CheckError('Missing destination for action "%s"' % (self.name))
 
     def end(self):
         self.filterprocessor.imapConnexion.copyMessages(self.filter.IMAPMessageSet, self.definition["destination"])
