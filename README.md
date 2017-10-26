@@ -10,7 +10,7 @@ it is :
 
 **PRE REQUISITES** :
 - python 3
-- imap client
+- imapclient
 - linux machine but certainly works on others
 
 **INSTALL** :
@@ -20,19 +20,32 @@ it is :
 
 - rename conf.yml.sample to conf.yml
 
-- run "SimpleImapFilter -s"
-- and use output into conf.yml for salt
+- run "SimpleImapFilter -s" to generate a salt key, and use output into conf.yml for salt
+
+**CONFIGURE FILTERS**
+- copy the sample file into a sub directory of mailboxes.d
+- rename it as .yml file
+- configure it with imap server and credentials
+run SimpleImapFilter -e <password> to encrypt your password
+- copy the output into configuration file
+- add clauses, actions if needed, and filter(s)
 
 **USE** :
 
 run SimpleImapFilter.py
 
-option : 
--a full message anlysis, fetch all messages in all mailboxes, all folders, usefull for debug
+options :
+-c to specify a configuration file, ./conf.yml by default
+-d, -v verbose mode, d for debug
+-s generates salt key
+-e encrypt password or any value to be encrypted in configurations files
+-a full message anlysis, fetch all messages in all mailboxes, all folders, usefull for debug. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "Count"
 
-the program "walk" the root directory and for all .yml file in subfolders run the .yml file
+the program "walk" the root directory and for all .yml file in subfolders and run the .yml file
 
 the program can be cronifized as it locks .yml files while filtering
+
+the program outputs it's log into a specific log file for each .yml file, in the same directory  
 
 each .yml file is composed by :
 - one imap_client : with IMAP server and credentials
@@ -43,6 +56,8 @@ each .yml file is composed by :
 **Filters**
 
 a filter **applies** an **ordered list of actions** on a list of messages matching with **ONE** of the clauses in his (ordered) clause list
+if the clause list of a filter is empty, no messages will pass through it
+to perform actions to all messages of a folder, use the basic clause "All" which is provided by default
 
 
 **Actions**
@@ -61,7 +76,7 @@ non-basic actions are : "Url" (Alpha version), "Copy", "Move"
 
 -**Copy** copy the filtered message set to his **destination**
  
--**Move** copy the filtered message set to his **destination** and **trash** it
+-**Move** copy the filtered message set to his **destination** and **delete** it
 
 **Clauses**
 
@@ -73,5 +88,7 @@ implemented conditions are :
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
         "seen", "flagged",
+        "true",
 
 "cs" suffixes means case sensitive, other conditions are non case sensitive
+"true" condition is allways true, it is used by the basic clause "All" which is automatically provided 

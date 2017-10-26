@@ -105,7 +105,13 @@ class FilterProcessor(object):
         self.filters = []
         self.actions = {}
         self.clauses = {}
-        self.addFilter({ "name": self.imapConnexion.server, "component": "filter", "folder_list": folders, "action_list": ["Count"]})
+        self.addFilter({
+            "name": self.imapConnexion.server,
+            "component": "filter",
+            "folder_list": folders,
+            "clause_list": ["All"],
+            "action_list": ["Count"],
+        })
 
     def readConf(self, conf):
         with open(conf, 'r') as stream:
@@ -187,6 +193,8 @@ class FilterProcessor(object):
                 self.prepareAnalyse(self.imapConnexion.folders)
             for basicAction in BaseAction.basics:
                 self.addAction({"name": basicAction, "component": "action", "type": basicAction})
+            for basicClause in BaseClause.basics:
+                self.addClause({"name": basicClause, "component": "clause", "true": "yes"})
             for filter in self.filters:
                 filter.run()
         finally:
