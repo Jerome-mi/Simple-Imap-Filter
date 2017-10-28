@@ -1,94 +1,85 @@
-#!/usr/bin/python3
-
-'''
-Created on 
-
-@author: 
-'''
-
-#http://irp.nain-t.net/doku.php/190imap:030_commandes
-
 from filterElement import BaseFilterElement
-
 
 
 class BaseFilter(BaseFilterElement):
     tokens = (
         "folder_list", "clause_list", "action_list", )
 
-    def __init__(self, _filterprocessor, _definition):
+    def __init__(self, _filter_processor, _definition):
         """
         """
-        self.filterprocessor = _filterprocessor
+        self.filter_processor = _filter_processor
         self.definition = _definition
         self.folders = _definition.get("folder_list")
         if not self.folders:
-            raise self.CheckError('File : "%s" Filter : "%s" no folder list \nAdd token "folder_list"' % (
-                self.filterprocessor.currentfile, self.definition["name"]))
+            raise self.CheckError('Playbook : "%s" Filter : "%s" no folder list \nAdd token "folder_list"' % (
+                self.filter_processor.current_playbook, self.definition["name"]))
         self.clauses = []
         self.actions = []
         self.IMAPMessageSet = []
 
         for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
-            if not _token in self.tokens:
-                raise self.CheckError('File : "%s" Filter : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
-                    self.filterprocessor.currentfile, self.definition["name"], _token, self.tokens))
-
+            if _token not in self.tokens:
+                raise self.CheckError('Playbook : "%s" Filter : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
+                    self.filter_processor.current_playbook, self.definition["name"], _token, self.tokens))
 
     def run(self):
         """ Run filter, check coherence actions filters and process message set
         :return:
         """
-        for _clauseName in self.definition.get('clause_list',[]):
-            clause = self.filterprocessor.clauses.get(_clauseName)
+        for _clauseName in self.definition.get('clause_list', []):
+            clause = self.filter_processor.clauses.get(_clauseName)
             if not clause:
-                raise self.CheckError('File "%s" : Filter "%s" : unknown clause : "%s"\nAvailable clauses: %s' % (
-                    self.filterprocessor.currentfile, self.definition["name"], _clauseName, tuple(self.filterprocessor.clauses.keys())))
+                raise self.CheckError('Playbook "%s" : Filter "%s" : unknown clause : "%s"\nAvailable clauses: %s' % (
+                    self.filter_processor.current_playbook, self.definition["name"], _clauseName,
+                    tuple(self.filter_processor.clauses.keys())))
             self.clauses.append(clause)
-        for _actionName in self.definition.get('action_list',[]):
-            if not self.filterprocessor.actions.get(_actionName):
-                raise self.CheckError('File "%s" : Filter "%s" : unknown action : "%s"\nAvailable actions : %s' % (
-                    self.filterprocessor.currentfile, self.definition["name"], _actionName, tuple(self.filterprocessor.actions.keys())))
-            self.actions.append(self.filterprocessor.actions[_actionName])
+        for _actionName in self.definition.get('action_list', []):
+            if not self.filter_processor.playbook_actions.get(_actionName):
+                raise self.CheckError('Playbook "%s" : Filter "%s" : unknown action : "%s"\nAvailable actions : %s' % (
+                    self.filter_processor.current_playbook, self.definition["name"], _actionName,
+                    tuple(self.filter_processor.playbook_actions.keys())))
+            self.actions.append(self.filter_processor.playbook_actions[_actionName])
         for _folder in self.folders:
-            self.processMessageSet(_folder)
+            self.process_message_set(_folder)
 
-    def processMessageSet(self, _folder):
+    def process_message_set(self, _folder):
         """ Applies actions on messages
         :return:
         """
         self.IMAPMessageSet = []
         for _action in self.actions:
-            _action.initializeFilter(self, _folder)
+            _action.initialize_filter(self, _folder)
         for _action in self.actions:
             _action.begin()
-        for _m in self.messageSet(_folder):
+        for _m in self.message_set(_folder):
             self.IMAPMessageSet.append(_m.msgID)
             for _action in self.actions:
-                _action.runMessage(_m)
+                _action.run_message(_m)
         for _action in self.actions:
             _action.end()
 
-    def messageCount(self):
+    def message_count(self):
         return len(self.IMAPMessageSet)
 
-    def match(self, _m):
+    def match(self, m):
         """ match if ONE clause matches short boolean evaluation
-        :param _m:
+        :param m:
         :return: boolean
         """
         if len(self.clauses) == 0:
             return False
         _match = False
         for clause in self.clauses:
-            _match = _match or clause.match(_m)
-            if _match: break
+            _match = _match or clause.match(m)
+            if _match:
+                break
         return _match
 
-    def messageSet(self, _folder):
+    def message_set(self, folder):
         """ filtered message header generator
         :return:
         """
-        for _m in self.filterprocessor.imapConnexion.messageHeaders( _folder):
+        for _m in self.filter_processor.imap_connexion.message_headers(folder):
             if self.match(_m):
                 yield _m

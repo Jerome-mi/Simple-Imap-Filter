@@ -1,42 +1,33 @@
-#!/usr/bin/python3
-
-'''
-Created on 
-
-@author: 
-'''
-
-#http://irp.nain-t.net/doku.php/190imap:030_commandes
-
 from imaplib import IMAP4
 import ssl
-import re
+
 from datetime import datetime, date
 
 from email import message_from_bytes
-from email.header import decode_header,Header
-from email.utils import parseaddr,parsedate_tz
+from email.header import decode_header, Header
+from email.utils import parseaddr, parsedate_tz
 
 import imapclient
 from filterElement import BaseFilterElement
 
-class Armoured_Message_Header(object):
+
+class ArmouredMessageHeader(object):
     def __init__(self, msg_id, internal_date, flags, msg):
         self.msgID = msg_id
         self.internalDateTime = internal_date
         self.internalDate = self.internalDateTime.date()
         self.flags = flags
         _date = msg["Date"]
-        _DateTime_Tuple = None
+        date_time_tuple = None
         if _date:
             if isinstance(_date, Header):
                 _date = str(_date)
                 _date = _date[:_date.find('(')]
-            _DateTime_Tuple = parsedate_tz(_date)
+            date_time_tuple = parsedate_tz(_date)
         # none if date without TZ
-        if _DateTime_Tuple:
-            self.date = date(*_DateTime_Tuple[:3])
-            self.datetime = datetime(*_DateTime_Tuple[:6])
+        if date_time_tuple:
+            self.date = date(*date_time_tuple[:3])
+            self.datetime = datetime(*date_time_tuple[:6])
         else:
             self.date = self.internalDate
             self.datetime = self.internalDateTime
@@ -47,14 +38,8 @@ class Armoured_Message_Header(object):
         self.cc = self.addresses_of_header(msg["Cc"])
         self.bcc = self.addresses_of_header(msg["Bcc"])
 
-    def decode_header_string(self, _str):
-
-        # if not _bytes:
-        #     return ''
-        # try:
-        #     _str = _bytes.decode()
-        # except:
-        #     _str = _bytes.decode('iso-8859-1')
+    @staticmethod
+    def decode_header_string(_str):
         if not _str:
             return None
         headers = decode_header(_str)
@@ -90,104 +75,109 @@ class Armoured_Message_Header(object):
     def __str__(self):
         return str(self.__dict__)
 
-class Cross_Country_Imap_Connexion(BaseFilterElement):
+
+class CrossCountryImapConnexion(BaseFilterElement):
     tokens = (
         "server", "user", "password", )
-    def __init__(self, filterProcessor, definition, args):
+
+    def __init__(self, filter_processor, definition, args):
         self.verbose = args.verbose
         self.definition = definition
-        self.filterProcessor = filterProcessor
+        self.filter_processor = filter_processor
         self.server = definition["server"]
         self.user = definition["user"]
         self.password = definition["password"]
-        self.toExpunge = False
+        self.to_expunge = False
+        self.select_result = None
+        self.folders = None
+        self.search_all_result_set = None
         try:
             self.M = imapclient.IMAPClient(self.server, ssl=True)
-        except IMAP4.error :
+        except IMAP4.error:
             ssl_context = ssl.create_default_context()
-            self.M = imapclient.IMAPClient(self.server,ssl_context=ssl_context, ssl=True)
-
-        for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
-            if not _token in self.tokens:
-                raise Exception('File : "%s" Imap_client : "%s" unknown token : "%s"\nAvailable tokens : ' % (
-                    self.filterProcessor.currentfile, self.definition["name"], _token))
+            self.M = imapclient.IMAPClient(self.server, ssl_context=ssl_context, ssl=True)
+        for token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
+            if token not in self.tokens:
+                raise Exception('Playbook : "%s" Imap_client : "%s" unknown token : "%s"\nAvailable tokens : ' % (
+                    self.filter_processor.current_playbook, self.definition["name"], token))
 
     def login(self):
-        self.toExpunge = False
+        self.to_expunge = False
         if self.verbose:
             print("Connecting to : %s user %s" % (self.server, self.user))
         cnx = self.M.login(self.user, self.password.decode())
         if cnx and self.verbose:
             print("Connected to : %s" % self.server)
-        self.listFolders()
+        self.list_folders()
 
-    def validateFolderName(self, folder):
-        if not folder in self.folders:
+    def validate_folder_name(self, folder):
+        if folder not in self.folders:
             folder = '"' + folder + '"'
-        if not folder in self.folders:
+        if folder not in self.folders:
             raise Exception("Folder %s doesn't exists.\nAvailable folders : %s " % (folder, self.folders))
         return folder
 
     def disconnect(self):
-        self.expungeMailBox()
+        self.expunge_mail_box()
         if self.M:
             try:
                 self.M.logout()
             except:
-                pass #TODO
+                pass  # TODO
 
-    def listFolders(self):
-        #TODO list(directory='Archive')
+    def list_folders(self):
+        # TODO list(directory='Archive')
         self.folders = []
         for f in self.M.list_folders():
-            if self.server == 'imap.gmail.com':
-                if f[2].startswith('[Gmail]'): continue
+            if self.server.upper() == 'IMAP.GMAIL.COM':
+                if f[2].startswith('[Gmail]'):
+                    continue
             self.folders.append(f[2])
 
-    def deleteMessages(self, msgIds):
-        if len(msgIds) == 0:
+    def delete_messages(self, msg_ids):
+        if len(msg_ids) == 0:
             return
-        self.M.set_flags(msgIds, b'\\Deleted')
-        self.toExpunge = True
+        self.M.set_flags(msg_ids, b'\\Deleted')
+        self.to_expunge = True
 
-    def copyMessages(self, msgIds, destination):
-        if len(msgIds) == 0:
+    def copy_messages(self, msg_ids, destination):
+        if len(msg_ids) == 0:
             return
-        destination = self.validateFolderName(destination)
-        self.M.copy(msgIds, destination)
+        destination = self.validate_folder_name(destination)
+        self.M.copy(msg_ids, destination)
 
-    def moveMessages(self, msgIds, destination):
-        if len(msgIds) == 0:
+    def move_messages(self, msg_ids, destination):
+        if len(msg_ids) == 0:
             return
-        destination = self.validateFolderName(destination)
-        self.M.copy(msgIds, destination)
-        self.deleteMessages(msgIds)
+        destination = self.validate_folder_name(destination)
+        self.M.copy(msg_ids, destination)
+        self.delete_messages(msg_ids)
 
-    def flagMessages(self, msgIds, flag, set):
-        if len(msgIds) == 0:
+    def flag_messages(self, msg_ids, flag, on):
+        if len(msg_ids) == 0:
             return
-        if set:
-            self.M.set_flags(msgIds, flag)
+        if on:
+            self.M.set_flags(msg_ids, flag)
         else:
-            self.M.remove_flags(msgIds, flag)
+            self.M.remove_flags(msg_ids, flag)
 
-    def expungeMailBox(self):
-        if self.toExpunge:
+    def expunge_mail_box(self):
+        if self.to_expunge:
             self.M.expunge()
 
-    def messageHeaders(self, folder):
-        folder = self.validateFolderName(folder)
+    def message_headers(self, folder):
+        folder = self.validate_folder_name(folder)
         self.select_result = self.M.select_folder(folder)
         message_count = self.select_result[b'EXISTS']
         if self.verbose:
             print("Select %s folder : %s messages" % (folder, message_count))
         if message_count == 0:
             return None
-        self.search_all_set = self.M.search()
-        datas = self.M.fetch(self.search_all_set, ['RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
+        self.search_all_result_set = self.M.search()
+        datas = self.M.fetch(self.search_all_result_set, ['RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
         for msg_Id in datas.keys():
             data = datas[msg_Id]
-            internaldate = data[b'INTERNALDATE']
+            internal_date = data[b'INTERNALDATE']
             flags = data[b'FLAGS']
             msg = message_from_bytes(data[b'RFC822.HEADER'])
-            yield (Armoured_Message_Header(msg_Id, internaldate, flags, msg))
+            yield (ArmouredMessageHeader(msg_Id, internal_date, flags, msg))
