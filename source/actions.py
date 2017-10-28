@@ -1,34 +1,28 @@
-#!/usr/bin/python3
-
-'''
-Created on 
-
-@author: 
-'''
-
 from filterElement import BaseFilterElement
 import copy
 from urllib import request, parse
 
 
 class BaseAction(BaseFilterElement):
-    def __init__(self, filterprocessor, definition):
-        self.filterprocessor = filterprocessor
+    def __init__(self, filter_processor, definition):
+        self.filter_processor = filter_processor
         self.name = definition["name"]
         self.definition = definition
-        self.logger = self.filterprocessor.filterLogger
+        self.logger = self.filter_processor.playbook_output
+        self.filter = None
+        self.folder = None
 
-    # automaticaly created. if exist, replaced with the basic one
+    # automatically created. if exist, replaced with the basic one
     basics = ["Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag"]
 
-    def initializeFilter(self, filter, folder):
-        self.filter = filter
+    def initialize_filter(self, _filter, folder):
+        self.filter = _filter
         self.folder = folder
 
-    def checkDefinition(self):
+    def check_definition(self):
         pass
 
-    def runMessage(self,m):
+    def run_message(self, m):
         pass
 
     def begin(self):
@@ -38,105 +32,90 @@ class BaseAction(BaseFilterElement):
         pass
 
     @classmethod
-    def newAction(cls, filterprocessor, definition):
+    def newAction(cls, filter_processor, definition):
         _name = definition["name"]
         _type = definition["type"] + "Action"
         try:
-            _newAction = {subcls.__name__: subcls for subcls in cls.__subclasses__()}[_type](filterprocessor, definition)
-        except:
-            raise cls.CheckError('File : "%s" : Action : "%s" unknown type "%s"\nAvailable types: %s' % (
-                filterprocessor.currentfile, _name,definition["type"], tuple(subcls.__name__[:-len("Action")] for subcls in cls.__subclasses__())))
-        _newAction.checkDefinition()
+            _newAction = {subcls.__name__: subcls
+                          for subcls in cls.__subclasses__()}[_type](filter_processor, definition)
+        except:  # TODO
+            raise cls.CheckError('Playbook : "%s" : Action : "%s" unknown type "%s"\nAvailable types: %s' % (
+                filter_processor.current_playbook, _name, definition["type"],
+                tuple(subcls.__name__[:-len("Action")] for subcls in cls.__subclasses__())))
+        _newAction.check_definition()
         return _newAction
 
 
 class PrintAction(BaseAction):
-    """ basic action print message
-    """
-    def runMessage(self,_m):
+    def run_message(self, _m):
         self.logger.info(_m)
 
 
 class SeenAction(BaseAction):
-    """
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.flagMessages(
+        self.filter_processor.imap_connexion.flag_messages(
             self.filter.IMAPMessageSet, b'\\Seen', True)
 
+
 class UnseenAction(BaseAction):
-    """
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.flagMessages(
+        self.filter_processor.imap_connexion.flag_messages(
             self.filter.IMAPMessageSet, b'\\Seen', False)
 
+
 class FlagAction(BaseAction):
-    """
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.flagMessages(
+        self.filter_processor.imap_connexion.flag_messages(
             self.filter.IMAPMessageSet, b'\\Flagged', True)
 
+
 class UnflagAction(BaseAction):
-    """
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.flagMessages(
+        self.filter_processor.imap_connexion.flag_messages(
             self.filter.IMAPMessageSet, '\\Flagged', False)
 
+
 class DeleteAction(BaseAction):
-    """ basic action delete message
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.deleteMessages(self.filter.IMAPMessageSet)
+        self.filter_processor.imap_connexion.delete_messages(self.filter.IMAP_message_set)
+
 
 class TrashAction(BaseAction):
-    """ basic action move message to Trash
-    """
     def end(self):
-        self.filterprocessor.imapConnexion.moveMessages(self.filter.IMAPMessageSet, "Trash")
+        self.filter_processor.imap_connexion.move_messages(self.filter.IMAPMessageSet, "Trash")
 
 
 class MoveAction(BaseAction):
-    """ copy message to destination and delete it
-    """
-    def checkDefinition(self):
+    def check_definition(self):
         if not self.definition.get("destination"):
-            raise self.CheckError('Missing destination for action "%s"' % (self.name))
+            raise self.CheckError('Missing destination for action "%s"' % self.name)
 
     def end(self):
-        self.filterprocessor.imapConnexion.moveMessages(self.filter.IMAPMessageSet, self.definition["destination"])
+        self.filter_processor.imap_connexion.move_messages(self.filter.IMAPMessageSet, self.definition["destination"])
 
 
 class CopyAction(BaseAction):
-    """ copy message to destination
-    """
-    def checkDefinition(self):
+    def check_definition(self):
         if not self.definition.get("destination"):
-            raise self.CheckError('Missing destination for action "%s"' % (self.name))
+            raise self.CheckError('Missing destination for action "%s"' % self.name)
 
     def end(self):
-        self.filterprocessor.imapConnexion.copyMessages(self.filter.IMAPMessageSet, self.definition["destination"])
+        self.filter_processor.imap_connexion.copy_messages(self.filter.IMAPMessageSet, self.definition["destination"])
 
 
 class CountAction(BaseAction):
-    """ basic action print count at end
-    """
     def end(self):
         self.logger.info('Filter "%s" : Folder "%s" : summary : %s message(s)' % (
-            self.filter.definition.get("name") , self.folder ,self.filter.messageCount()))
+            self.filter.definition.get("name"), self.folder, self.filter.message_count()))
 
 
 class UrlAction(BaseAction):
-    """ send HTTP GET to url from a message
-    """
-    def checkDefinition(self):
+    def check_definition(self):
         self.url = self.definition["url"]
         self.data = self.definition["data"]
 
-    def runMessage(self,m):
-        msgdata = []
+    def run_message(self, m):
+        msg_data = []
         #  [key , value from yml],
         #  "user" , "foo"],
         #  "message", key, value from message
@@ -145,9 +124,9 @@ class UrlAction(BaseAction):
             if len(l) == 3:
                 l.pop(0)
                 l[1] = m.__dict__[l[1]]
-            msgdata.append(tuple(l))
-        encodeddata = "?" +parse.urlencode(msgdata)
-        full_url = self.url + encodeddata
+            msg_data.append(tuple(l))
+        encoded_data = "?" + parse.urlencode(msg_data)
+        full_url = self.url + encoded_data
         if self.definition.get("test"):
             self.logger.info("testing")
             self.logger.info(full_url)

@@ -1,5 +1,5 @@
 ---
-# Sample File
+# Sample Playbook
 
 # Mail box
   - name: "My box on myprovider.net"
@@ -10,7 +10,7 @@
     # crypting is STRONGLY RECOMMENDED, run with -e to encrypt password, then copy output in just below
     password: "gAAAAABZ6b5eUMcb9thistokenisfake2oYE1YHv9sTZMcQ9v_rTjTjg=="
     # it is possible to encrypt any data in this file, like this : ["user","password"]
-    crypted: ["password"]
+    encrypted: ["password"]
 
 # clauses
   - name: "Very old and non flagged mails"
