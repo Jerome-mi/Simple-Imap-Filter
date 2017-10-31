@@ -1,0 +1,35 @@
+---
+# Sample Playbook
+
+# Mail box
+  - name: "My box on myprovider.net"
+    component: imap_client
+    # imap.google.com etc...
+    server: "mail.myprovider.net"
+    user: "my.box@myprovider.net"
+    # crypting is STRONGLY RECOMMENDED, run with -e to encrypt password, then copy output in just below
+    password: "gAAAAABZ6b5eUMcb9thistokenisfake2oYE1YHv9sTZMcQ9v_rTjTjg=="
+    # it is possible to encrypt any data in this file, like this : ["user","password"]
+    encrypted: ["password"]
+
+# clauses
+  - name: "From domain.org"
+    component: "clause"
+    from_domain: "domain.org"
+
+# filters
+  - name: "Sort incoming from domain.org into folder domain.org"
+    component: "filter"
+    folder_list: ["INBOX"]
+    clause_list: [
+        "From domain.org",
+      ]
+    action_list: [
+      "Sort in domain.org",
+      ]
+
+# actions
+  - name: "Sort in domain.org"
+    component: "action"
+    type: "Move"
+    destination: "domain.org"
