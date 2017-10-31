@@ -88,7 +88,8 @@ class TrashAction(BaseAction):
 class MoveAction(BaseAction):
     def check_definition(self):
         if not self.definition.get("destination"):
-            raise self.CheckError('Missing destination for action "%s"' % self.name)
+            raise self.CheckError('Playbook : "%s" : Action : "%s" : no destination\nAdd a destination folder'
+                                  % (self.filter_processor.current_playbook , self.name))
 
     def end(self):
         self.filter_processor.imap_connexion.move_messages(self.filter.IMAPMessageSet, self.definition["destination"])
@@ -97,7 +98,8 @@ class MoveAction(BaseAction):
 class CopyAction(BaseAction):
     def check_definition(self):
         if not self.definition.get("destination"):
-            raise self.CheckError('Missing destination for action "%s"' % self.name)
+            raise self.CheckError('Playbook : "%s" : Action : "%s" : no destination\nAdd a destination folder'
+                                  % (self.filter_processor.current_playbook , self.name))
 
     def end(self):
         self.filter_processor.imap_connexion.copy_messages(self.filter.IMAPMessageSet, self.definition["destination"])
