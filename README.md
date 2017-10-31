@@ -20,13 +20,13 @@ it is :
 
 - rename conf.yml.sample to conf.yml
 
-- run "SimpleImapFilter -s" to generate a salt key, and use output into conf.yml for salt
+- run "SimpleImapFilter.py -s" to generate a salt key, and use the output into conf.yml for salt
 
 **CONFIGURE FILTERS**
 - copy one of the sample playbook files into a sub directory of mailboxes.d
 - rename it as ".yml"
 - configure it with imap server and login
-run SimpleImapFilter -e <password> to encrypt your password
+- run SimpleImapFilter -e <password> to encrypt your password
 - copy the output into the playbook
 - add clauses, actions if needed, and filter(s) in the playbook
 

@@ -4,3 +4,4 @@
     #root_dir: ../mailboxes.d
     ## password encryption STRONGLY RECOMMENDED run with -s to generate salt, then copy output in just below
     salt: "gAAAAABZ6b5eUMcb9thistokenisfake2oYE1YHv9sTZMcQ9v_rTjTjg=="
+    log: "./log/SampleImapFilter.log"
