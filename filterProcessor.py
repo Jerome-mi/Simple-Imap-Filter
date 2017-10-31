@@ -41,6 +41,7 @@ class FilterProcessor(object):
         self.playbook_logger.setLevel(logging.INFO)
         self.playbook_output = logging.getLogger("PlaybookOutput")
         self.playbook_output.setLevel(logging.INFO)
+        self.log_file = None
 
     def decrypt(self, s):
         try:
@@ -53,6 +54,8 @@ class FilterProcessor(object):
 
     def run(self, args):
         self.args = args
+        self.read_conf(self.args.conf)
+
         self.logger.setLevel(logging.WARNING)
         if self.args.verbose:
             self.logger.setLevel(logging.INFO)
@@ -60,7 +63,6 @@ class FilterProcessor(object):
                 self.logger.setLevel(logging.DEBUG)
         self.logger.info("Running in verbose mode")
         self.logger.info("Reading configuration file : %s" % self.args.conf)
-        self.read_conf(self.args.conf)
 
         if self.args.salt:
             key = Fernet.generate_key()
@@ -129,6 +131,7 @@ class FilterProcessor(object):
                 self.salt = bytes(self.salt, 'utf-8')
             else:
                 self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
+            self.set_log_file(yamlcfg.get("log"))
             self.root_dir = yamlcfg.get("root_dir", self.default_root_dir)
             self.logger.info("Root directory : %s" % self.root_dir)
 
@@ -233,6 +236,11 @@ class FilterProcessor(object):
         if not (server and user and password):
             raise self.CheckError("server, user and password are mandatory for imap_client component")
         self.imap_connexion = CrossCountryImapConnexion(self, definition, self.args)
+
+    def set_log_file(self, log_file_name):
+        if log_file_name:
+            self.log_file = log_file_name
+            self.logger.addHandler(logging.FileHandler(self.log_file, mode='a'))
 
     def set_lock(self, file_to_lock):
         result = not os.path.exists(file_to_lock[:-4]+'.lock')
