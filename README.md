@@ -43,7 +43,7 @@ options :
 
 the program "walks" the root directory, for each playbook (.yml file) in sub-folders "runs" the playbook
 
-the program can be "cronifized" as it locks playbooks while filtering, so if launched while the previous process is still running, it will just continue to next playbook
+the program can be "cronifized" as it locks playbooks while filtering, so if it is launched while the previous process is still running, it will just continue to the next playbook
 
 for each playbook, log and output are written in separates files (.log and .out), in the same directory
  
