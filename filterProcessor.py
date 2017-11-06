@@ -127,10 +127,10 @@ class FilterProcessor(object):
                 self.logger.error('Error in YAML configuration file %s :' % conf)
                 raise
             self.salt = yamlcfg.get("salt")
-            if self.salt:
+            if self.salt: # todo isinstance str
                 self.salt = bytes(self.salt, 'utf-8')
             else:
-                self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
+                self.logger.info('No salt for password or sensible data encryption %s :' % conf)
             self.set_log_file(yamlcfg.get("log"))
             self.root_dir = yamlcfg.get("root_dir", self.default_root_dir)
             self.logger.info("Root directory : %s" % self.root_dir)
