@@ -52,12 +52,31 @@ class FilterProcessor(object):
             self.logger.error("Error during decrypt token %s\nCheck token and salt" % s)
             raise
 
-    def salt_keys(self, full_file):
-        pass
+    def encrypt_keys(self, full_file):
+        if self.set_lock(full_file):
+            try:
+                self.logger.info('Reading key file : "%s"' % full_file)
+                with open(full_file, 'r') as stream:
+                    yaml_keys = yaml.load(stream)
+                if not yaml_keys:
+                    return
+                cipher_suite = Fernet(self.salt)
+                new_yaml_keys = {}
+                for key in yaml_keys.keys():
+                    if key.startswith('encrypt_'):
+                        new_key = key.replace('encrypt_','encrypted_')
+                        new_yaml_keys[new_key] = cipher_suite.encrypt(bytes(yaml_keys[key], "utf-8")).decode()
+                    if key.startswith('encrypted_'):
+                        new_yaml_keys[key] = yaml_keys[key]
+                with open(full_file, 'w') as stream:
+                    yaml.dump(new_yaml_keys,stream)
+            except yaml.YAMLError:
+                self.logger.error('YAML Error in playbook "%s" :' % full_file)
+            finally:
+                self.release_lock(full_file)
 
     def run(self, args):
         self.args = args
-        self.read_conf(self.args.conf)
 
         self.logger.setLevel(logging.WARNING)
         if self.args.verbose:
@@ -66,6 +85,7 @@ class FilterProcessor(object):
                 self.logger.setLevel(logging.DEBUG)
         self.logger.info("Running in verbose mode")
         self.logger.info("Reading configuration file : %s" % self.args.conf)
+        self.read_conf(self.args.conf)
 
         if self.args.salt:
             key = Fernet.generate_key()
@@ -82,7 +102,7 @@ class FilterProcessor(object):
             for file in files:
                 full_file = os.path.join(path, file)
                 if file[-4:] == '.key':
-                    self.salt_keys(full_file)
+                    self.encrypt_keys(full_file)
                     continue
                 if file[-4:] != '.yml':
                     self.logger.debug('File "%s" not ending with .yml : skipped' % file)
@@ -250,13 +270,13 @@ class FilterProcessor(object):
             self.logger.addHandler(logging.FileHandler(self.log_file, mode='a'))
 
     def set_lock(self, file_to_lock):
-        result = not os.path.exists(file_to_lock[:-4]+'.lock')
+        result = not os.path.exists(file_to_lock + '.lock')
         if result:
-            open(file_to_lock[:-4] + '.lock', mode='w')
+            open(file_to_lock + '.lock', mode='w')
         else:
             self.logger.info('Playbook "%s" locked, skipped' % file_to_lock)
         return result
 
     @staticmethod
     def release_lock(file_to_lock):
-        os.unlink(file_to_lock[:-4] + '.lock')
+        os.unlink(file_to_lock + '.lock')
