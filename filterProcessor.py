@@ -52,6 +52,9 @@ class FilterProcessor(object):
             self.logger.error("Error during decrypt token %s\nCheck token and salt" % s)
             raise
 
+    def salt_keys(self, full_file):
+        pass
+
     def run(self, args):
         self.args = args
         self.read_conf(self.args.conf)
@@ -78,6 +81,9 @@ class FilterProcessor(object):
         for path, directory, files in os.walk(self.root_dir):
             for file in files:
                 full_file = os.path.join(path, file)
+                if file[-4:] == '.key':
+                    self.salt_keys(full_file)
+                    continue
                 if file[-4:] != '.yml':
                     self.logger.debug('File "%s" not ending with .yml : skipped' % file)
                     continue
@@ -127,10 +133,11 @@ class FilterProcessor(object):
                 self.logger.error('Error in YAML configuration file %s :' % conf)
                 raise
             self.salt = yamlcfg.get("salt")
-            if self.salt: # todo isinstance str
+            if self.salt: # todo test isinstance str
                 self.salt = bytes(self.salt, 'utf-8')
             else:
-                self.logger.info('No salt for password or sensible data encryption %s :' % conf)
+                if not self.args.salt:
+                    self.logger.warning('No salt for password or sensible data encryption %s :' % conf)
             self.set_log_file(yamlcfg.get("log"))
             self.root_dir = yamlcfg.get("root_dir", self.default_root_dir)
             self.logger.info("Root directory : %s" % self.root_dir)
