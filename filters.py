@@ -16,7 +16,7 @@ class BaseFilter(BaseFilterElement):
                 self.filter_processor.current_playbook, self.definition["name"]))
         self.clauses = []
         self.actions = []
-        self.IMAPMessageSet = []
+        self.IMAP_message_set = []
 
         for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
             if _token not in self.tokens:
@@ -47,20 +47,20 @@ class BaseFilter(BaseFilterElement):
         """ Applies actions on messages
         :return:
         """
-        self.IMAPMessageSet = []
+        self.IMAP_message_set = []
         for _action in self.actions:
             _action.initialize_filter(self, _folder)
         for _action in self.actions:
             _action.begin()
         for _m in self.message_set(_folder):
-            self.IMAPMessageSet.append(_m.msgID)
+            self.IMAP_message_set.append(_m.msgID)
             for _action in self.actions:
                 _action.run_message(_m)
         for _action in self.actions:
             _action.end()
 
     def message_count(self):
-        return len(self.IMAPMessageSet)
+        return len(self.IMAP_message_set)
 
     def match(self, m):
         """ match if ONE clause matches short boolean evaluation
