@@ -10,6 +10,7 @@ class BaseClause(BaseFilterElement):
         "subject_contains", "subject_starts",
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
+        "size_ko", "size_mo",
         "seen", "flagged",
         "All",
     )
@@ -181,6 +182,15 @@ class BaseClause(BaseFilterElement):
     @staticmethod
     def match_seen(criteria, _header):
         return criteria == (b'\\Seen' in _header.flags)
+
+    # size
+    @staticmethod
+    def match_size_ko(criteria, _header):
+        return _header.size >= (criteria * 1024)
+
+    @staticmethod
+    def match_size_mo(criteria, _header):
+        return _header.size >= (criteria * 1024 * 1024)
 
     # specials
     @staticmethod

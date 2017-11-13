@@ -12,11 +12,12 @@ from filterElement import BaseFilterElement
 
 
 class ArmouredMessageHeader(object):
-    def __init__(self, msg_id, internal_date, flags, msg):
+    def __init__(self, msg_id, internal_date, flags, size, msg):
         self.msgID = msg_id
         self.internalDateTime = internal_date
         self.internalDate = self.internalDateTime.date()
         self.flags = flags
+        self.size = size
         _date = msg["Date"]
         date_time_tuple = None
         if _date:
@@ -174,10 +175,11 @@ class CrossCountryImapConnexion(BaseFilterElement):
         if message_count == 0:
             return None
         self.search_all_result_set = self.M.search()
-        datas = self.M.fetch(self.search_all_result_set, ['RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
+        datas = self.M.fetch(self.search_all_result_set, ['RFC822.SIZE', 'RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
         for msg_Id in datas.keys():
             data = datas[msg_Id]
             internal_date = data[b'INTERNALDATE']
             flags = data[b'FLAGS']
+            size = data[b'RFC822.SIZE']
             msg = message_from_bytes(data[b'RFC822.HEADER'])
-            yield (ArmouredMessageHeader(msg_Id, internal_date, flags, msg))
+            yield (ArmouredMessageHeader(msg_Id, internal_date, flags, size, msg))
