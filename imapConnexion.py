@@ -147,17 +147,17 @@ class CrossCountryImapConnexion(BaseFilterElement):
         self.M.copy(msg_ids, destination)
 
     def move_messages(self, msg_ids, destination):
-        if len(msg_ids) == 0:
-            return
-        destination = self.validate_folder_name(destination)
-        self.M.copy(msg_ids, destination)
+        # if len(msg_ids) == 0:
+        #     return
+        # destination = self.validate_folder_name(destination)
+        self.copy_messages(msg_ids, destination)
         self.delete_messages(msg_ids)
 
     def flag_messages(self, msg_ids, flag, on):
         if len(msg_ids) == 0:
             return
         if on:
-            self.M.set_flags(msg_ids, flag)
+            self.M.add_flags(msg_ids, flag)
         else:
             self.M.remove_flags(msg_ids, flag)
 
