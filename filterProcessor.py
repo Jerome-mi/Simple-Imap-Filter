@@ -1,6 +1,7 @@
 import os
 import yaml
 import logging
+import logging.handlers
 
 from cryptography.fernet import Fernet
 
@@ -36,6 +37,8 @@ class FilterProcessor(object):
         self.logger = logging.getLogger("FilterProcessorLogger")
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
+        self.formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        ch.setFormatter(self.formatter)
         self.logger.addHandler(ch)
         self.playbook_logger = logging.getLogger("PlaybookLogger")
         self.playbook_logger.setLevel(logging.INFO)
@@ -110,7 +113,9 @@ class FilterProcessor(object):
                 with open(full_file, 'r') as stream:
                     if self.set_lock(full_file):
                         try:
-                            self.playbook_log_handler = logging.FileHandler(full_file[:-3] + "log", mode='a')
+                            self.playbook_log_handler = logging.handlers.RotatingFileHandler(
+                                full_file[:-3] + "log", maxBytes=102400, backupCount=5)
+                            self.playbook_log_handler.setFormatter(self.formatter)
                             self.playbook_logger.addHandler(self.playbook_log_handler)
                             self.playbook_output_handler = logging.FileHandler(full_file[:-3] + "out", mode='w')
                             self.playbook_output.addHandler(self.playbook_output_handler)
@@ -121,10 +126,13 @@ class FilterProcessor(object):
                             self.logger.info('end of playbook : "%s"' % full_file)
                         except (BaseFilterElement.CheckError, self.CheckError) as chk:
                             self.logger.error(chk)
+                            self.playbook_logger.error(chk)
                         except yaml.YAMLError:
                             self.logger.error('YAML Error in playbook "%s" :' % full_file)
+                            self.playbook_logger.error('YAML Error in playbook "%s" :' % full_file)
                         except Exception as exc:
                             self.logger.error('Playbook "%s" in error : %s' % (full_file, exc))
+                            self.playbook_logger.error('Playbook "%s" in error : %s' % (full_file, exc))
                             pass
                         finally:
                             self.release_lock(full_file)
@@ -267,7 +275,7 @@ class FilterProcessor(object):
     def set_log_file(self, log_file_name):
         if log_file_name:
             self.log_file = log_file_name
-            self.logger.addHandler(logging.FileHandler(self.log_file, mode='a'))
+            self.logger.addHandler(logging.handlers.RotatingFileHandler(self.log_file, maxBytes=102400, backupCount=5))
 
     def set_lock(self, file_to_lock):
         result = not os.path.exists(file_to_lock + '.lock')
