@@ -42,7 +42,7 @@ class ArmouredMessageHeader(object):
     @staticmethod
     def decode_header_string(_str):
         if not _str:
-            return None
+            return ''
         headers = decode_header(_str)
         result = ''
         for h, e in headers:
