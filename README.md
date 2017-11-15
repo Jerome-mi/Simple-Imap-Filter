@@ -1,12 +1,23 @@
 SimpleImapFilter is a simple IMAP filter written in python,
 it is :
+
 - not yet a stable program, but almost works, especially the delete action
+
+- documented by me, so in poor english
 
 - based on the holy imapclient library
 
 - using YAML for configuration file and filters configuration, called playbooks
 
-- aimed to be used by (almost) human beings
+- using logging module to perform output and logs
+
+- only fetching header of messages and certainly the body onle when needed in a short future
+
+- not optimized for the moment
+
+and :
+
+- aimed to be used by (almost) human beings, even if it's not obvious for the moment
 
 **PRE REQUISITES** :
 - python 3
@@ -39,7 +50,10 @@ options :
 -d, -v : verbose mode, d for debug
 -s generates salt key
 -e encrypt password or any value to be encrypted in playbooks
--a fetch all messages in all mailboxes, all folders, usefull for debug. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "Count"
+-f fetch all messages in all mailboxes, all folders, useful for debug. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "Count"
+-a analyse messages in all mailboxes, all folders, and print count and size. It is equivalent of a filter linked to all folders of a mailbox, with the clause "All" and the action "TotalSize"
+
+fetch all and analyse options deactivate other filters and actions, it is equivalent to a dry run.
 
 the program "walks" the root directory, for each playbook (.yml file) in sub-folders "runs" the playbook
 
@@ -55,22 +69,24 @@ each .yml playbook is composed by components :
 
 **Filters**
 
-- a filter **applies** an **ordered list of actions** on a list of messages matching with **ONE** of the clauses in his (ordered) clause list
+- a filter **applies** an **ordered list of actions** on a list of messages matching with **ONE** of the clauses in his (ordered) clause list for messages in a list of folders
 - if the clause list of a filter is empty, no messages will pass through it
 - to perform actions to all messages in a folder, use the basic clause "All" which is provided by default
+- if the list of folders is empty then **ALL FOLDERS** will be processed 
 
 
 **Actions**
 
-basic actions are : "Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag"
+basic actions are : "Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag", "TotalSize"
 
-(they can be used even if not declared in the playbook)
+(they can be used even if not declared in the playbook because they dont need complement of definition like "destination" etc...)
 
 DO NOT USE DELETE ACTION except if you have tested this program at least six month on your mailbox
 USE TRASH ACTION if you want to safely delete your mails
 
+non-basic actions are : "Url" (Alpha version), "Copy", "Move"
 
-non-basic actions are : "Url" (Alpha version), "Copy", "Move" 
+DO NOT USE COPY ACTION WITHOUT MOVE OR TRASH in recurrent filter usage, as it will generate duplicates in destination folder and full the box 
 
 -**Url** calls an Url
 
@@ -87,8 +103,9 @@ available conditions are :
         "subject_contains", "subject_starts",
         "subject_contains_cs", "subject_starts_cs",
         "age_day", "fresh_day",
+        "size_ko", "size_mo",
         "seen", "flagged",
         "All",
 
 "cs" suffixes means case sensitive, other conditions are not
-"All" condition is always true, it is used by the basic clause "All" which is provided by default
+"All" condition is always true, it is used by the basic clause "All" which is provided by default. 
