@@ -13,7 +13,7 @@ class BaseAction(BaseFilterElement):
         self.folder = None
 
     # automatically created. if exist, replaced with the basic one
-    basics = ["Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag"]
+    basics = ["Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag", "TotalSize"]
 
     def initialize_filter(self, _filter, folder):
         self.filter = _filter
@@ -110,6 +110,29 @@ class CountAction(BaseAction):
         self.logger.info('Filter "%s" : Folder "%s" : summary : %s message(s)' % (
             self.filter.definition.get("name"), self.folder, self.filter.message_count()))
 
+
+class TotalSizeAction(BaseAction):
+    total_size = 0
+    folder_total_size = 0
+    def begin(self):
+        self.folder_total_size = 0
+
+    def run_message(self, m):
+        self.folder_total_size += m.size
+
+    def end(self):
+        if self.folder_total_size > 1024 * 1024 :
+            self.folder_total_size_human = "%d Mo" % round(self.folder_total_size / (1024*1024), 2)
+        else:
+            self.folder_total_size_human = "%d Ko" % round(self.folder_total_size / 1024, 2)
+        self.total_size += self.folder_total_size
+        if self.total_size > 1024 * 1024 :
+            self.total_size_human = "%d Mo" % round(self.total_size / (1024*1024), 2)
+        else:
+            self.total_size_human = "%d Ko" % round(self.total_size / 1024, 2)
+
+        self.logger.info('Filter "%s" : Folder "%s" : summary : %s message(s), total folder size : %s, total size : %s' % (
+            self.filter.definition.get("name"), self.folder, self.filter.message_count(), self.folder_total_size_human, self.total_size_human))
 
 class UrlAction(BaseAction):
     def check_definition(self):

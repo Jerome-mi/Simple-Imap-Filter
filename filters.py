@@ -11,9 +11,6 @@ class BaseFilter(BaseFilterElement):
         self.filter_processor = _filter_processor
         self.definition = _definition
         self.folders = _definition.get("folder_list")
-        if not self.folders:
-            raise self.CheckError('Playbook : "%s" Filter : "%s" no folder list \nAdd token "folder_list"' % (
-                self.filter_processor.current_playbook, self.definition["name"]))
         self.clauses = []
         self.actions = []
         self.IMAP_message_set = []
@@ -40,6 +37,8 @@ class BaseFilter(BaseFilterElement):
                     self.filter_processor.current_playbook, self.definition["name"], _actionName,
                     tuple(self.filter_processor.playbook_actions.keys())))
             self.actions.append(self.filter_processor.playbook_actions[_actionName])
+        if (self.folders is None) or (len(self.folders) == 0):
+            self.folders = self.filter_processor.imap_connexion.folders
         for _folder in self.folders:
             self.process_message_set(_folder)
 

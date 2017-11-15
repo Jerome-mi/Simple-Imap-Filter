@@ -67,12 +67,12 @@ class FilterProcessor(object):
                 new_yaml_keys = {}
                 for key in yaml_keys.keys():
                     if key.startswith('encrypt_'):
-                        new_key = key.replace('encrypt_','encrypted_')
+                        new_key = key.replace('encrypt_', 'encrypted_')
                         new_yaml_keys[new_key] = cipher_suite.encrypt(bytes(yaml_keys[key], "utf-8")).decode()
                     if key.startswith('encrypted_'):
                         new_yaml_keys[key] = yaml_keys[key]
                 with open(full_file, 'w') as stream:
-                    yaml.dump(new_yaml_keys,stream)
+                    yaml.dump(new_yaml_keys, stream)
             except yaml.YAMLError:
                 self.logger.error('YAML Error in playbook "%s" :' % full_file)
             finally:
@@ -117,12 +117,14 @@ class FilterProcessor(object):
                                 full_file[:-3] + "log", maxBytes=102400, backupCount=5)
                             self.playbook_log_handler.setFormatter(self.formatter)
                             self.playbook_logger.addHandler(self.playbook_log_handler)
-                            self.playbook_output_handler = logging.FileHandler(full_file[:-3] + "out", mode='w')
-                            self.playbook_output.addHandler(self.playbook_output_handler)
+                            playbook_output_handler = logging.FileHandler(full_file[:-3] + "out", mode='w')
+                            self.playbook_output.addHandler(playbook_output_handler)
                             self.current_playbook = full_file
                             self.logger.info('Running playbook : "%s"' % full_file)
                             yamlcfg = yaml.load(stream)
+
                             self.run_playbook(yamlcfg, self.args)
+
                             self.logger.info('end of playbook : "%s"' % full_file)
                         except (BaseFilterElement.CheckError, self.CheckError) as chk:
                             self.logger.error(chk)
@@ -137,11 +139,13 @@ class FilterProcessor(object):
                         finally:
                             self.release_lock(full_file)
                             self.playbook_logger.removeHandler(self.playbook_log_handler)
-                            self.playbook_output.removeHandler(self.playbook_output_handler)
+                            self.playbook_output.removeHandler(playbook_output_handler)
 
     def prepare_fetch_all(self, folders):
-        print("Analysing mailbox :%s" % self.imap_connexion.definition["name"])
-        print("folders : " + str(folders))
+        self.playbook_output.info("Fetch all mailbox :%s" % self.imap_connexion.definition["name"])
+        self.playbook_output.info("folders : " + str(folders))
+        self.logger.info("Fetch all mailbox :%s" % self.imap_connexion.definition["name"])
+        self.logger.info("folders : " + str(folders))
         self.playbook_filters = []
         self.playbook_actions = {}
         self.clauses = {}
@@ -153,6 +157,22 @@ class FilterProcessor(object):
             "action_list": ["Count"],
         })
 
+    def prepare_analyse(self, folders):
+        self.playbook_output.info("Analysing mailbox :%s" % self.imap_connexion.definition["name"])
+        self.playbook_output.info("folders : " + str(folders))
+        self.logger.info("Analysing mailbox :%s" % self.imap_connexion.definition["name"])
+        self.logger.info("folders : " + str(folders))
+        self.playbook_filters = []
+        self.playbook_actions = {}
+        self.clauses = {}
+        self.add_playbook_filter({
+            "name": self.imap_connexion.server,
+            "component": "filter",
+            "folder_list": folders,
+            "clause_list": ["All"],
+            "action_list": ["TotalSize"],
+        })
+
     def read_conf(self, conf):
         with open(conf, 'r') as stream:
             try:
@@ -161,7 +181,7 @@ class FilterProcessor(object):
                 self.logger.error('Error in YAML configuration file %s :' % conf)
                 raise
             self.salt = yamlcfg.get("salt")
-            if self.salt: # todo test isinstance str
+            if self.salt:  # todo test isinstance str
                 self.salt = bytes(self.salt, 'utf-8')
             else:
                 if not self.args.salt:
@@ -239,6 +259,8 @@ class FilterProcessor(object):
             self.imap_connexion.login()
             if args.fetchAll:
                 self.prepare_fetch_all(self.imap_connexion.folders)
+            elif args.analyse:
+                self.prepare_analyse(self.imap_connexion.folders)
             for basicAction in BaseAction.basics:
                 self.add_playbook_action({"name": basicAction, "component": "action", "type": basicAction})
             for basicClause in BaseClause.basics:

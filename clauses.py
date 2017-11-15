@@ -118,79 +118,79 @@ class BaseClause(BaseFilterElement):
         return match
 
     @staticmethod
-    def match_age_day(criteria, _header):
-        return (date.today() - _header.date) >= timedelta(days=criteria)
+    def match_age_day(criteria, header):
+        return (date.today() - header.date) >= timedelta(days=criteria)
 
     @staticmethod
-    def match_fresh_day(criteria, _header):
-        return (date.today() - _header.date) < timedelta(days=criteria)
+    def match_fresh_day(criteria, header):
+        return (date.today() - header.date) < timedelta(days=criteria)
 
     # from
-    def match_from_domain(self, criteria, _header):
-        return self.domain_in_address_list(criteria, _header.from_)
+    def match_from_domain(self, criteria, header):
+        return self.domain_in_address_list(criteria, header.from_)
 
-    def match_from_full_domain(self, criteria, _header):
-        return self.full_domain_in_address_list(criteria, _header.from_)
+    def match_from_full_domain(self, criteria, header):
+        return self.full_domain_in_address_list(criteria, header.from_)
 
-    def match_from_name(self, criteria, _header):
-        return self.name_in_address_list(criteria, _header.from_)
+    def match_from_name(self, criteria, header):
+        return self.name_in_address_list(criteria, header.from_)
 
-    def match_from_name_cs(self, criteria, _header):
-        return self.name_in_address_list(criteria, _header.from_)
+    def match_from_name_cs(self, criteria, header):
+        return self.name_in_address_list(criteria, header.from_)
 
-    def match_from(self, criteria, _header):
-        return self.adr_in_address_list(criteria, _header.from_)
+    def match_from(self, criteria, header):
+        return self.adr_in_address_list(criteria, header.from_)
 
     # to
-    def match_to_domain(self, criteria, _header):
-        return self.domain_in_address_list(criteria, _header.to)
+    def match_to_domain(self, criteria, header):
+        return self.domain_in_address_list(criteria, header.to)
 
-    def match_to_full_domain(self, criteria, _header):
-        return self.full_domain_in_address_list(criteria, _header.to)
+    def match_to_full_domain(self, criteria, header):
+        return self.full_domain_in_address_list(criteria, header.to)
 
-    def match_to_name(self, criteria, _header):
-        return self.name_in_address_list(criteria, _header.to)
+    def match_to_name(self, criteria, header):
+        return self.name_in_address_list(criteria, header.to)
 
-    def match_to_name_cs(self, criteria, _header):
-        return self.name_in_address_list_cs(criteria, _header.to)
+    def match_to_name_cs(self, criteria, header):
+        return self.name_in_address_list_cs(criteria, header.to)
 
-    def match_to(self, criteria, _header):
-        return self.adr_in_address_list(criteria, _header.to)
+    def match_to(self, criteria, header):
+        return self.adr_in_address_list(criteria, header.to)
 
     # subject
     @staticmethod
-    def match_subject_starts(criteria, _header):
-        return _header.subject.startswith(criteria)
+    def match_subject_starts(criteria, header):
+        return header.subject.startswith(criteria)
 
     @staticmethod
-    def match_subject_contains(criteria, _header):
-        return criteria in _header.subject
+    def match_subject_contains(criteria, header):
+        return criteria in header.subject
 
     @staticmethod
-    def match_subject_starts_cs(criteria, _header):
-        return _header.subject.upper().startswith(criteria.upper())
+    def match_subject_starts_cs(criteria, header):
+        return header.subject.upper().startswith(criteria.upper())
 
     @staticmethod
-    def match_subject_contains_cs(criteria, _header):
-        return criteria.upper() in _header.subject.upper()
+    def match_subject_contains_cs(criteria, header):
+        return criteria.upper() in header.subject.upper()
 
     # flags
     @staticmethod
-    def match_flagged(criteria, _header):
-        return criteria == (b'\\Flagged' in _header.flags)
+    def match_flagged(criteria, header):
+        return criteria == (b'\\Flagged' in header.flags)
 
     @staticmethod
-    def match_seen(criteria, _header):
-        return criteria == (b'\\Seen' in _header.flags)
+    def match_seen(criteria, header):
+        return criteria == (b'\\Seen' in header.flags)
 
     # size
     @staticmethod
-    def match_size_ko(criteria, _header):
-        return _header.size >= (criteria * 1024)
+    def match_size_ko(criteria, header):
+        return header.size >= (criteria * 1024)
 
     @staticmethod
-    def match_size_mo(criteria, _header):
-        return _header.size >= (criteria * 1024 * 1024)
+    def match_size_mo(criteria, header):
+        return header.size >= (criteria * 1024 * 1024)
 
     # specials
     @staticmethod
@@ -198,10 +198,10 @@ class BaseClause(BaseFilterElement):
         return True
 
     # generic match
-    def match(self, _header):
+    def match(self, header):
         match = True
         for condition, criteria in self.conditions:
-            match = match and condition(criteria, _header)
+            match = match and condition(criteria, header)
             if not match:
                 break
         return match
