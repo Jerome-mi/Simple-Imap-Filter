@@ -1,9 +1,9 @@
-from filterElement import BaseFilterElement
+from filterElement import BaseFilterProcessorElement
 import copy
 from urllib import request, parse
 
 
-class BaseAction(BaseFilterElement):
+class BaseAction(BaseFilterProcessorElement):
     def __init__(self, filter_processor, definition):
         self.filter_processor = filter_processor
         self.name = definition["name"]

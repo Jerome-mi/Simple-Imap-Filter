@@ -11,9 +11,9 @@ it is :
 
 - using logging module to perform output and logs
 
-- only fetching header of messages and certainly the body onle when needed in a short future
+- only fetching header of messages and body only when needed
 
-- not optimized for the moment
+- not fully optimized for the moment
 
 and :
 
@@ -105,6 +105,8 @@ available conditions are :
         "age_day", "fresh_day",
         "size_ko", "size_mo",
         "seen", "flagged",
+        "body_contains",
+        "body_contains_cs",
         "All",
 
 "cs" suffixes means case sensitive, other conditions are not
