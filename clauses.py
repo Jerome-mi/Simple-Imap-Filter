@@ -1,8 +1,8 @@
 from datetime import date, timedelta
-from filterElement import BaseFilterElement
+from filterElement import BaseFilterProcessorElement
 
 
-class BaseClause(BaseFilterElement):
+class BaseClause(BaseFilterProcessorElement):
 
     tokens = (
         "to_domain", "to_full_domain", "to_name", "to_name_cs", "to",
@@ -12,6 +12,8 @@ class BaseClause(BaseFilterElement):
         "age_day", "fresh_day",
         "size_ko", "size_mo",
         "seen", "flagged",
+        "body_contains",
+        "body_contains_cs",
         "All",
     )
 
@@ -23,7 +25,7 @@ class BaseClause(BaseFilterElement):
         self.definition = definition
         self.conditions = []
 
-        for token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
+        for token in set(self.definition.keys()) - set(BaseFilterProcessorElement.tokens):
             if token not in self.tokens:
                 raise self.CheckError('Playbook : "%s" Clause : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
                     self.filter_processor.current_playbook, self.definition["name"], token, self.tokens))
@@ -160,19 +162,19 @@ class BaseClause(BaseFilterElement):
     # subject
     @staticmethod
     def match_subject_starts(criteria, header):
-        return header.subject.startswith(criteria)
-
-    @staticmethod
-    def match_subject_contains(criteria, header):
-        return criteria in header.subject
-
-    @staticmethod
-    def match_subject_starts_cs(criteria, header):
         return header.subject.upper().startswith(criteria.upper())
 
     @staticmethod
-    def match_subject_contains_cs(criteria, header):
+    def match_subject_contains(criteria, header):
         return criteria.upper() in header.subject.upper()
+
+    @staticmethod
+    def match_subject_starts_cs(criteria, header):
+        return header.subject.startswith(criteria)
+
+    @staticmethod
+    def match_subject_contains_cs(criteria, header):
+        return criteria in header.subject
 
     # flags
     @staticmethod
@@ -191,6 +193,15 @@ class BaseClause(BaseFilterElement):
     @staticmethod
     def match_size_mo(criteria, header):
         return header.size >= (criteria * 1024 * 1024)
+
+    # body
+    @staticmethod
+    def match_body_contains(criteria, header):
+        return criteria.upper() in header.get_body().upper()
+
+    @staticmethod
+    def match_body_contains_cs(criteria, header):
+        return criteria in header.get_body()
 
     # specials
     @staticmethod

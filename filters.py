@@ -1,7 +1,7 @@
-from filterElement import BaseFilterElement
+from filterElement import BaseFilterProcessorElement
 
 
-class BaseFilter(BaseFilterElement):
+class BaseFilter(BaseFilterProcessorElement):
     tokens = (
         "folder_list", "clause_list", "action_list", )
 
@@ -15,7 +15,7 @@ class BaseFilter(BaseFilterElement):
         self.actions = []
         self.IMAP_message_set = []
 
-        for _token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
+        for _token in set(self.definition.keys()) - set(BaseFilterProcessorElement.tokens):
             if _token not in self.tokens:
                 raise self.CheckError('Playbook : "%s" Filter : "%s" unknown token : "%s"\nAvailable tokens : %s' % (
                     self.filter_processor.current_playbook, self.definition["name"], _token, self.tokens))

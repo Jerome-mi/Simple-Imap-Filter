@@ -8,11 +8,13 @@ from email.header import decode_header, Header
 from email.utils import parseaddr, parsedate_tz
 
 import imapclient
-from filterElement import BaseFilterElement
+from filterElement import BaseFilterProcessorElement
 
 
 class ArmouredMessageHeader(object):
-    def __init__(self, msg_id, internal_date, flags, size, msg):
+    def __init__(self, imap_connexion, folder, msg_id, internal_date, flags, size, msg):
+        self.imap_connexion = imap_connexion
+        self.folder = folder
         self.msgID = msg_id
         self.internalDateTime = internal_date
         self.internalDate = self.internalDateTime.date()
@@ -38,6 +40,16 @@ class ArmouredMessageHeader(object):
         self.to = self.addresses_of_header(msg["To"])
         self.cc = self.addresses_of_header(msg["Cc"])
         self.bcc = self.addresses_of_header(msg["Bcc"])
+        self._body = None
+
+    def get_body(self):
+        if self._body:
+            self.imap_connexion.logger.info(
+                'Fetch body for message "%s" in folder "%s" : in cache' % (self.msgID, self.folder))
+            return self._body
+        else:
+            self._body = self.imap_connexion.fetch_text_message_body(self.folder, self.msgID)
+            return self._body
 
     @staticmethod
     def decode_header_string(_str):
@@ -77,14 +89,14 @@ class ArmouredMessageHeader(object):
         return str(self.__dict__)
 
 
-class CrossCountryImapConnexion(BaseFilterElement):
+class CrossCountryImapConnexion(BaseFilterProcessorElement):
     tokens = (
         "server", "user", "password", )
 
-    def __init__(self, filter_processor, definition, args):
-        self.verbose = args.verbose
+    def __init__(self, filter_processor, definition):
         self.definition = definition
         self.filter_processor = filter_processor
+        self.logger = filter_processor.logger
         self.server = definition["server"]
         self.user = definition["user"]
         self.password = definition["password"]
@@ -92,23 +104,23 @@ class CrossCountryImapConnexion(BaseFilterElement):
         self.select_result = None
         self.folders = None
         self.search_all_result_set = None
+        self.folder_cache = {}
         try:
             self.M = imapclient.IMAPClient(self.server, ssl=True)
         except IMAP4.error:
             ssl_context = ssl.create_default_context()
             self.M = imapclient.IMAPClient(self.server, ssl_context=ssl_context, ssl=True)
-        for token in set(self.definition.keys()) - set(BaseFilterElement.tokens):
+        for token in set(self.definition.keys()) - set(BaseFilterProcessorElement.tokens):
             if token not in self.tokens:
                 raise Exception('Playbook : "%s" Imap_client : "%s" unknown token : "%s"\nAvailable tokens : ' % (
                     self.filter_processor.current_playbook, self.definition["name"], token))
 
     def login(self):
         self.to_expunge = False
-        if self.verbose:
-            print("Connecting to : %s user %s" % (self.server, self.user))
+        self.logger.info('Connecting to : "%s" user %s' % (self.server, self.user))
         cnx = self.M.login(self.user, self.password.decode())
-        if cnx and self.verbose:
-            print("Connected to : %s" % self.server)
+        if cnx:
+            self.logger.info('Connected to : "%s"' % self.server)
         self.list_folders()
 
     def validate_folder_name(self, folder):
@@ -122,6 +134,7 @@ class CrossCountryImapConnexion(BaseFilterElement):
         self.expunge_mail_box()
         if self.M:
             try:
+                self.logger.info('Disconnecting from : "%s" user %s' % (self.server, self.user))
                 self.M.logout()
             except:
                 pass  # TODO
@@ -168,18 +181,90 @@ class CrossCountryImapConnexion(BaseFilterElement):
 
     def message_headers(self, folder):
         folder = self.validate_folder_name(folder)
-        self.select_result = self.M.select_folder(folder)
-        message_count = self.select_result[b'EXISTS']
-        if self.verbose:
-            print("Select %s folder : %s messages" % (folder, message_count))
-        if message_count == 0:
-            return None
-        self.search_all_result_set = self.M.search()
-        datas = self.M.fetch(self.search_all_result_set, ['RFC822.SIZE', 'RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
-        for msg_Id in datas.keys():
-            data = datas[msg_Id]
+        header_set = self.get_folder_message_header_set(folder)
+        for msg_Id in header_set.keys():
+            data = header_set[msg_Id]
             internal_date = data[b'INTERNALDATE']
             flags = data[b'FLAGS']
             size = data[b'RFC822.SIZE']
             msg = message_from_bytes(data[b'RFC822.HEADER'])
-            yield (ArmouredMessageHeader(msg_Id, internal_date, flags, size, msg))
+            yield ArmouredMessageHeader(self, folder, msg_Id, internal_date, flags, size, msg)
+
+    def store_folder_message_header_set(self, folder):
+        self.select_result = self.M.select_folder(folder)
+        message_count = self.select_result[b'EXISTS']
+        self.logger.info('Select "%s" folder : %s messages' % (folder, message_count))
+        if message_count == 0:
+            fetched_data_set = {}
+        else:
+            self.search_all_result_set = self.M.search()
+            fetched_data_set = self.M.fetch(
+                self.search_all_result_set, ['RFC822.SIZE', 'RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
+        self.logger.info('Fetched "%s" folder : %s messages' % (folder, message_count))
+        self.folder_cache[folder] = fetched_data_set
+        return fetched_data_set
+
+    def get_folder_message_header_set(self, folder):
+        result = self.folder_cache.get(folder)
+        if result:
+            self.logger.info('Select "%s" folder : in cache' % folder)
+            return result
+        else:
+            return self.store_folder_message_header_set(folder)
+
+    def fetch_text_message_body(self, folder, msgID):
+        self.logger.info('Fetch body for message "%s" in folder "%s"' % (msgID, folder))
+        self.M.select_folder(folder)
+        fetched_body = self.M.fetch([msgID], ['RFC822'])
+        msg = message_from_bytes(fetched_body[msgID][b'RFC822'])
+        msg_text = ''
+        if msg.is_multipart():
+            for part in msg.walk():
+                msg_text = msg_text + self.decode_text_body_part(part)
+        else:
+            msg_text = self.decode_text_body_part(msg)
+        self.logger.info('Fetched body for message "%s" in folder "%s"' % (msgID, folder))
+        return msg_text
+
+    @staticmethod
+    def decode_text_body_part(msg_part):
+        ct = msg_part.get_content_type()
+        cc = msg_part.get_content_charset()  # charset in Content-Type header
+        # cte = msg_part.get("Content-Transfer-Encoding")
+        # print("part: " + str(ct) + " " + str(cc) + " : " + str(cte))
+
+        if msg_part.get_content_maintype() != "text":
+            return ''
+        if msg_part.get_content_subtype() != "plain":
+            return ''
+        result = msg_part.get_payload(decode = True).decode(cc)
+        # # html to text
+        # if msg.get_content_subtype() == "html":
+        #     try:
+        #         ddd = html2text.html2text(ddd)
+        #     except:
+        #         print("error in html2text")
+        #
+        return result
+
+
+# def decode_text(payload, charset, default_charset):
+#     if charset:
+#         try:
+#             return payload.decode(charset), charset
+#         except UnicodeError:
+#             pass
+#
+#     if default_charset and default_charset != 'auto':
+#         try:
+#             return payload.decode(default_charset), default_charset
+#         except UnicodeError:
+#             pass
+#
+#     for chset in ['ascii', 'utf-8', 'utf-16', 'windows-1252', 'cp850']:
+#         try:
+#             return payload.decode(chset), chset
+#         except UnicodeError:
+#             pass
+#
+#     return payload, None

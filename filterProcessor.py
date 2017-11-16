@@ -5,7 +5,7 @@ import logging.handlers
 
 from cryptography.fernet import Fernet
 
-from filterElement import BaseFilterElement
+from filterElement import BaseFilterProcessorElement
 from actions import BaseAction
 from clauses import BaseClause
 from filters import BaseFilter
@@ -126,7 +126,7 @@ class FilterProcessor(object):
                             self.run_playbook(yamlcfg, self.args)
 
                             self.logger.info('end of playbook : "%s"' % full_file)
-                        except (BaseFilterElement.CheckError, self.CheckError) as chk:
+                        except (BaseFilterProcessorElement.CheckError, self.CheckError) as chk:
                             self.logger.error(chk)
                             self.playbook_logger.error(chk)
                         except yaml.YAMLError:
@@ -292,7 +292,7 @@ class FilterProcessor(object):
         password = definition.get("password")
         if not (server and user and password):
             raise self.CheckError("server, user and password are mandatory for imap_client component")
-        self.imap_connexion = CrossCountryImapConnexion(self, definition, self.args)
+        self.imap_connexion = CrossCountryImapConnexion(self, definition)
 
     def set_log_file(self, log_file_name):
         if log_file_name:

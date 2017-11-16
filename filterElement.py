@@ -1,4 +1,4 @@
-class BaseFilterElement(object):
+class BaseFilterProcessorElement(object):
     class CheckError(Exception):
         pass
 
