@@ -52,30 +52,33 @@ class BaseFilter(BaseFilterProcessorElement):
         finally:
             self.logger.setLevel(playbook_log_level)
 
-    def process_message_set(self, _folder):
+    def process_message_set(self, folder):
         """ Applies actions on messages
         :return:
         """
         self.IMAP_message_IDs = []
 
-        self.logger.debug('"%s" start running in explain  mode' % self.definition["name"])
+        self.logger.debug('Filter"%s" start running in explain mode' % self.definition["name"])
         for clause in self.clauses:
             self.logger.debug('Clause "%s" ' % clause.definition)
         for _action in self.actions:
-            _action.initialize_filter(self, _folder)
+            _action.initialize_filter(self, folder, self.logger)
 
         for _action in self.actions:
             _action.begin()
 
-        for _m in self.message_set(_folder):
-            self.IMAP_message_IDs.append(_m.msgID)
-            for _action in self.actions:
-                _action.run_message(_m)
+        for m in self.message_set(folder):
+            self.IMAP_message_IDs.append(m.msgID)
+            for action in self.actions:
+                self.logger.debug('Run "%s" for message "%s"' % (action.definition["name"], m.msgID))
+                action.run_message(m)
 
-        for _action in self.actions:
-            _action.end()
+        for action in self.actions:
+            self.logger.debug('End "%s" for matching IDs' % (action.definition["name"]))
+            action.end()
 
-        self.logger.debug('"%s" end running in explain  mode' % self.definition["name"])
+        self.logger.debug('%d matching IDs : "%s"' % (len(self.IMAP_message_IDs), self.IMAP_message_IDs))
+        self.logger.debug('Filter"%s" end running in explain mode' % self.definition["name"])
 
     def message_count(self):
         return len(self.IMAP_message_IDs)

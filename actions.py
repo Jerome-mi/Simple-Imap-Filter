@@ -8,16 +8,17 @@ class BaseAction(BaseFilterProcessorElement):
         self.filter_processor = filter_processor
         self.name = definition["name"]
         self.definition = definition
-        self.logger = self.filter_processor.playbook_output
+        self.output = self.filter_processor.playbook_output
         self.filter = None
         self.folder = None
 
     # automatically created. if exist, replaced with the basic one
     basics = ["Count", "Delete", "Print", "Trash", "Seen", "Unseen", "Flag", "Unflag", "TotalSize"]
 
-    def initialize_filter(self, _filter, folder):
+    def initialize_filter(self, _filter, folder, logger):
         self.filter = _filter
         self.folder = folder
+        self.logger = logger
 
     def check_definition(self):
         pass
@@ -48,7 +49,7 @@ class BaseAction(BaseFilterProcessorElement):
 
 class PrintAction(BaseAction):
     def run_message(self, _m):
-        self.logger.info(_m)
+        self.output.info(_m)
 
 
 class SeenAction(BaseAction):
@@ -107,7 +108,7 @@ class CopyAction(BaseAction):
 
 class CountAction(BaseAction):
     def end(self):
-        self.logger.info('Filter "%s" : Folder "%s" : summary : %s message(s)' % (
+        self.output.info('Filter "%s" : Folder "%s" : summary : %s message(s)' % (
             self.filter.definition.get("name"), self.folder, self.filter.message_count()))
 
 
@@ -122,17 +123,17 @@ class TotalSizeAction(BaseAction):
 
     def end(self):
         if self.folder_total_size > 1024 * 1024 :
-            self.folder_total_size_human = "%d Mo" % round(self.folder_total_size / (1024*1024), 2)
+            folder_total_size_human = "%d Mo" % round(self.folder_total_size / (1024*1024), 2)
         else:
-            self.folder_total_size_human = "%d Ko" % round(self.folder_total_size / 1024, 2)
+            folder_total_size_human = "%d Ko" % round(self.folder_total_size / 1024, 2)
         self.total_size += self.folder_total_size
         if self.total_size > 1024 * 1024 :
-            self.total_size_human = "%d Mo" % round(self.total_size / (1024*1024), 2)
+            total_size_human = "%d Mo" % round(self.total_size / (1024*1024), 2)
         else:
-            self.total_size_human = "%d Ko" % round(self.total_size / 1024, 2)
+            total_size_human = "%d Ko" % round(self.total_size / 1024, 2)
 
-        self.logger.info('Filter "%s" : Folder "%s" : summary : %s message(s), total folder size : %s, total size : %s' % (
-            self.filter.definition.get("name"), self.folder, self.filter.message_count(), self.folder_total_size_human, self.total_size_human))
+        self.output.info('Filter "%s" : Folder "%s" : summary : %s message(s), total folder size : %s, total size : %s' % (
+            self.filter.definition.get("name"), self.folder, self.filter.message_count(), folder_total_size_human, total_size_human))
 
 class UrlAction(BaseAction):
     def check_definition(self):
