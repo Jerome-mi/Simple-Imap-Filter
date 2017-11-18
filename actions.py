@@ -54,35 +54,35 @@ class PrintAction(BaseAction):
 class SeenAction(BaseAction):
     def end(self):
         self.filter_processor.imap_connexion.flag_messages(
-            self.filter.IMAP_message_set, b'\\Seen', True)
+            self.filter.IMAP_message_IDs, b'\\Seen', True)
 
 
 class UnseenAction(BaseAction):
     def end(self):
         self.filter_processor.imap_connexion.flag_messages(
-            self.filter.IMAP_message_set, b'\\Seen', False)
+            self.filter.IMAP_message_IDs, b'\\Seen', False)
 
 
 class FlagAction(BaseAction):
     def end(self):
         self.filter_processor.imap_connexion.flag_messages(
-            self.filter.IMAP_message_set, b'\\Flagged', True)
+            self.filter.IMAP_message_IDs, b'\\Flagged', True)
 
 
 class UnflagAction(BaseAction):
     def end(self):
         self.filter_processor.imap_connexion.flag_messages(
-            self.filter.IMAP_message_set, '\\Flagged', False)
+            self.filter.IMAP_message_IDs, '\\Flagged', False)
 
 
 class DeleteAction(BaseAction):
     def end(self):
-        self.filter_processor.imap_connexion.delete_messages(self.filter.IMAP_message_set)
+        self.filter_processor.imap_connexion.delete_messages(self.filter.IMAP_message_IDs)
 
 
 class TrashAction(BaseAction):
     def end(self):
-        self.filter_processor.imap_connexion.move_messages(self.filter.IMAP_message_set, "Trash")
+        self.filter_processor.imap_connexion.move_messages(self.filter.IMAP_message_IDs, "Trash")
 
 
 class MoveAction(BaseAction):
@@ -92,7 +92,7 @@ class MoveAction(BaseAction):
                                   % (self.filter_processor.current_playbook , self.name))
 
     def end(self):
-        self.filter_processor.imap_connexion.move_messages(self.filter.IMAP_message_set, self.definition["destination"])
+        self.filter_processor.imap_connexion.move_messages(self.filter.IMAP_message_IDs, self.definition["destination"])
 
 
 class CopyAction(BaseAction):
@@ -102,7 +102,7 @@ class CopyAction(BaseAction):
                                   % (self.filter_processor.current_playbook , self.name))
 
     def end(self):
-        self.filter_processor.imap_connexion.copy_messages(self.filter.IMAP_message_set, self.definition["destination"])
+        self.filter_processor.imap_connexion.copy_messages(self.filter.IMAP_message_IDs, self.definition["destination"])
 
 
 class CountAction(BaseAction):
