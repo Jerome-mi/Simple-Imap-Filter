@@ -86,7 +86,14 @@ class ArmouredMessageHeader(object):
         return [(self.decode_header_string(name), self.decode_header_string(address)) for name, address in result]
 
     def __str__(self):
-        return str(self.__dict__)
+        print_dict = self.__dict__
+        if print_dict.get("_body"):
+            del print_dict["_body"]
+        del print_dict["imap_connexion"]
+        del print_dict["folder"]
+        del print_dict["internalDate"]
+        del print_dict["internalDateTime"]
+        return str(print_dict)
 
 
 class CrossCountryImapConnexion(BaseFilterProcessorElement):

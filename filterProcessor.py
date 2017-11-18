@@ -34,12 +34,14 @@ class FilterProcessor(object):
         self.playbook_actions = {}
         self.clauses = {}
         self.playbook_names = {}
+        # logger for processor
         self.logger = logging.getLogger("FilterProcessorLogger")
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         self.formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         ch.setFormatter(self.formatter)
         self.logger.addHandler(ch)
+        # loggers for playbooks
         self.playbook_logger = logging.getLogger("PlaybookLogger")
         self.playbook_logger.setLevel(logging.INFO)
         self.playbook_output = logging.getLogger("PlaybookOutput")
@@ -114,7 +116,7 @@ class FilterProcessor(object):
                     if self.set_lock(full_file):
                         try:
                             self.playbook_log_handler = logging.handlers.RotatingFileHandler(
-                                full_file[:-3] + "log", maxBytes=102400, backupCount=5)
+                                full_file[:-3] + "log", maxBytes=1048576, backupCount=5)
                             self.playbook_log_handler.setFormatter(self.formatter)
                             self.playbook_logger.addHandler(self.playbook_log_handler)
                             playbook_output_handler = logging.FileHandler(full_file[:-3] + "out", mode='w')
@@ -297,7 +299,9 @@ class FilterProcessor(object):
     def set_log_file(self, log_file_name):
         if log_file_name:
             self.log_file = log_file_name
-            self.logger.addHandler(logging.handlers.RotatingFileHandler(self.log_file, maxBytes=102400, backupCount=5))
+            handler = logging.handlers.RotatingFileHandler(self.log_file, maxBytes=1048576, backupCount=5)
+            handler.setFormatter(self.formatter)
+            self.logger.addHandler(handler)
 
     def set_lock(self, file_to_lock):
         result = not os.path.exists(file_to_lock + '.lock')

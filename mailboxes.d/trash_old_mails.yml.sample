@@ -21,6 +21,7 @@
 # filters
   - name: "Trash non flagged old mails"
     component: "filter"
+    #explain: True
     folder_list: ["INBOX"]
     clause_list: [
         "Very old non flagged mails",
