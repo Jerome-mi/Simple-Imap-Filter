@@ -73,6 +73,7 @@ each .yml playbook is composed by components :
 - if the clause list of a filter is empty, no messages will pass through it
 - to perform actions to all messages in a folder, use the basic clause "All" which is provided by default
 - if the list of folders is empty then **ALL FOLDERS** will be processed 
+- it is possible to **explain** behaviour of a bilter by adding the **explain" property to True in definition. **CAUTION** explaination generates big logs, use it only when needed  
 
 
 **Actions**
