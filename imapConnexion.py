@@ -212,7 +212,7 @@ class CrossCountryImapConnexion(BaseFilterProcessorElement):
             fetched_data_set = self.M.fetch(
                 self.search_all_result_set, ['RFC822.SIZE', 'RFC822.HEADER', 'INTERNALDATE', 'FLAGS'])
         self.logger.info('Fetched "%s" folder : %s messages' % (folder, message_count))
-        self.folder_cache[folder] = fetched_data_set
+        #self.folder_cache[folder] = fetched_data_set
         return fetched_data_set
 
     def get_folder_message_header_set(self, folder):

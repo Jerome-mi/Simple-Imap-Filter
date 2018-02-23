@@ -58,7 +58,7 @@ class BaseFilter(BaseFilterProcessorElement):
         """
         self.IMAP_message_IDs = []
 
-        self.logger.debug('Filter"%s" start running in explain mode' % self.definition["name"])
+        self.logger.debug('Filter "%s" start running in explain mode' % self.definition["name"])
         for clause in self.clauses:
             self.logger.debug('Clause "%s" ' % clause.definition)
         for _action in self.actions:
@@ -78,7 +78,7 @@ class BaseFilter(BaseFilterProcessorElement):
             action.end()
 
         self.logger.debug('%d matching IDs : "%s"' % (len(self.IMAP_message_IDs), self.IMAP_message_IDs))
-        self.logger.debug('Filter"%s" end running in explain mode' % self.definition["name"])
+        self.logger.debug('Filter "%s" end running in explain mode' % self.definition["name"])
 
     def message_count(self):
         return len(self.IMAP_message_IDs)
@@ -88,13 +88,14 @@ class BaseFilter(BaseFilterProcessorElement):
         :param m:
         :return: boolean
         """
-        self.logger.debug('Message Header "%s" ' % m)
+        #self.logger.debug('Message Header "%s" ' % m)
         if len(self.clauses) == 0:
             return False
         _match = False
         for clause in self.clauses:
             _match = _match or clause.match(m)
             if _match:
+                self.logger.debug('Message Header "%s" ' % m)
                 self.logger.debug('"%s" matches' % clause.definition["name"])
                 break
         return _match
