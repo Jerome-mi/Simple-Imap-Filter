@@ -87,7 +87,7 @@ USE TRASH ACTION if you want to safely delete your mails
 
 non-basic actions are : "Url" (Alpha version), "Copy", "Move"
 
-DO NOT USE COPY ACTION WITHOUT MOVE OR TRASH in recurrent filter usage, as it will generate duplicates in destination folder and full the box 
+DO NOT USE COPY ACTION WITHOUT MOVE OR TRASH in recurrent filter usage, as it will generate duplicates in destination folder and fill the box 
 
 -**Url** calls an Url
 
